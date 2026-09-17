@@ -1,26 +1,255 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ==========================================================================
+   Designové tokeny — Fyzioterapie Michaela Kokešová
+   Jediný zdroj pravdy. Hodnoty pocházejí z „Vizuální specifikace — komponenty".
+   Do komponent se nepíší hexy ani pixely, vždy jen token.
+   ========================================================================== */
+
+@theme {
+  /* --- Barvy ------------------------------------------------------------
+     Azurová je značková barva. Používá se VÝHRADNĚ jako výplň — nikdy jako
+     barva písma na světlém podkladu (kontrast 1,5 : 1). Na azurové ploše se
+     píše barvou `text`. Jako barva písma smí být jen na tmavém `text`.        */
+
+  --color-azurova: #7ce4e5; /* značka, tlačítka, dělící čáry, plochy sekcí */
+  --color-azurova-svetla: #b1f6f6; /* štítky, jemné zvýraznění, podklad mapy */
+
+  --color-text: #2e302d; /* text, ikony, pozadí zápatí, hover tlačítek */
+  --color-text-doplnek: #55574f; /* doplňkový text — 7,03 : 1 na povrchu */
+
+  --color-seda: #d0d1ce; /* plné plochy, karty, placeholdery v adminu */
+  --color-plocha: #ededea; /* pozadí sudé sekce */
+  --color-povrch: #fbfbfa; /* pozadí liché sekce, povrch karet */
+  --color-linka: #e4e5e1; /* linka uvnitř karet, sekundární tlačítko */
+
+  /* Zápatí — tmavý podklad, jediné místo, kde je azurová barvou písma */
+  --color-patka-text: #d5d6d2;
+  --color-patka-nadpis: #a9aba6;
+  --color-patka-linka: #474945;
+
+  /* --- Písmo ------------------------------------------------------------
+     Manrope, řezy 400 / 600 / 700 / 800. Hostované u nás přes next/font,
+     nikdy z cizího CDN — jinak odchází IP adresa návštěvníka.               */
+
+  --font-sans: var(--font-manrope), system-ui, sans-serif;
+
+  /* --- Typografická škála -----------------------------------------------
+     Základ jsou hodnoty pro mobil, varianty `-pc` platí od 1024 px výš.
+     Běžný text nikde pod 17 px. Výjimka jen kapitálkový štítek a copyright. */
+
+  --text-h1: 2.25rem; /* 36 px */
+  --text-h1--line-height: 1.08;
+  --text-h1--font-weight: 800;
+  --text-h1--letter-spacing: -0.03em;
+
+  --text-h1-pc: 3.875rem; /* 62 px */
+  --text-h1-pc--line-height: 1.06;
+  --text-h1-pc--font-weight: 800;
+  --text-h1-pc--letter-spacing: -0.03em;
+
+  --text-h2: 1.875rem; /* 30 px */
+  --text-h2--line-height: 1.15;
+  --text-h2--font-weight: 800;
+  --text-h2--letter-spacing: -0.02em;
+
+  --text-h2-pc: 2.75rem; /* 44 px */
+  --text-h2-pc--line-height: 1.1;
+  --text-h2-pc--font-weight: 800;
+  --text-h2-pc--letter-spacing: -0.02em;
+
+  --text-h3: 1.5rem; /* 24 px — střed rozsahu 22–27 */
+  --text-h3--line-height: 1.2;
+  --text-h3--font-weight: 800;
+  --text-h3--letter-spacing: -0.02em;
+
+  --text-h3-pc: 2rem; /* 32 px — střed rozsahu 28–36 */
+  --text-h3-pc--line-height: 1.2;
+  --text-h3-pc--font-weight: 800;
+  --text-h3-pc--letter-spacing: -0.02em;
+
+  --text-perex: 1.1875rem; /* 19 px */
+  --text-perex--line-height: 1.55;
+  --text-perex--font-weight: 400;
+
+  --text-perex-pc: 1.375rem; /* 22 px */
+  --text-perex-pc--line-height: 1.55;
+  --text-perex-pc--font-weight: 400;
+
+  --text-telo: 1.125rem; /* 18 px */
+  --text-telo--line-height: 1.5;
+  --text-telo--font-weight: 400;
+
+  --text-telo-pc: 1.25rem; /* 20 px */
+  --text-telo-pc--line-height: 1.55;
+  --text-telo-pc--font-weight: 400;
+
+  --text-odkaz: 1.1875rem; /* 19 px */
+  --text-odkaz--line-height: 1.3;
+  --text-odkaz--font-weight: 700;
+
+  --text-odkaz-pc: 1.3125rem; /* 21 px */
+  --text-odkaz-pc--line-height: 1.3;
+  --text-odkaz-pc--font-weight: 700;
+
+  /* Řádkový odkaz v rozcestníku „Co vás trápí" */
+  --text-odkaz-velky: 1.375rem; /* 22 px */
+  --text-odkaz-velky--line-height: 1.3;
+  --text-odkaz-velky--font-weight: 700;
+
+  /* Tlačítka mají vlastní velikost — primární je největší text na stránce */
+  --text-tlacitko: 1.3125rem; /* 21 px */
+  --text-tlacitko--line-height: 1.2;
+  --text-tlacitko--font-weight: 800;
+
+  --text-tlacitko-pc: 1.5625rem; /* 25 px */
+  --text-tlacitko-pc--line-height: 1.2;
+  --text-tlacitko-pc--font-weight: 800;
+
+  --text-tlacitko-2: 1.1875rem; /* 19 px — sekundární */
+  --text-tlacitko-2--line-height: 1.2;
+  --text-tlacitko-2--font-weight: 700;
+
+  --text-tlacitko-2-pc: 1.3125rem; /* 21 px — sekundární */
+  --text-tlacitko-2-pc--line-height: 1.2;
+  --text-tlacitko-2-pc--font-weight: 700;
+
+  /* Kapitálkový štítek — jediná povolená výjimka z hranice 17 px */
+  --text-stitek: 0.6875rem; /* 11 px */
+  --text-stitek--line-height: 1.3;
+  --text-stitek--font-weight: 700;
+  --text-stitek--letter-spacing: 0.1em;
+
+  --text-stitek-pc: 0.8125rem; /* 13 px */
+  --text-stitek-pc--line-height: 1.3;
+  --text-stitek-pc--font-weight: 700;
+  --text-stitek-pc--letter-spacing: 0.1em;
+
+  /* --- Zaoblení ---------------------------------------------------------- */
+
+  --radius-dlazdice: 20px; /* dlaždice, velké karty, galerie, mapa */
+  --radius-karta: 16px; /* karty, řádkové odkazy */
+  --radius-karta-velka: 18px; /* karta otázky a odpovědi */
+  --radius-tlacitko: 14px; /* tlačítka */
+  --radius-polozka: 10px; /* položka v rozbaleném menu */
+  --radius-stitek: 999px; /* štítky, kolečka */
+
+  /* --- Rozměry ----------------------------------------------------------- */
+
+  --container-web: 90rem; /* 1440 px */
+
+  --spacing-okraj: 1.25rem; /* vnitřní okraj mobil — 20 px */
+  --spacing-okraj-pc: 4rem; /* vnitřní okraj počítač — 64 px */
+  --spacing-sekce: 2.125rem; /* svislé odsazení sekce mobil — 34 px */
+  --spacing-sekce-pc: 4.75rem; /* svislé odsazení sekce počítač — 76 px */
+  --spacing-hero-pc: 5.25rem; /* úvodní blok — 84 px */
+  --spacing-klik: 3rem; /* minimální klikací plocha — 48 px */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* ==========================================================================
+   Základní vrstva
+   ========================================================================== */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    /* Doskrolování na #kontakt nesmí skončit pod pevnou hlavičkou */
+    scroll-padding-top: 7.5rem;
+  }
+
+  body {
+    background-color: var(--color-povrch);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: var(--text-telo);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @media (min-width: 1024px) {
+    body {
+      font-size: var(--text-telo-pc);
+      line-height: 1.55;
+    }
+  }
+
+  /* Viditelné ohnisko klávesnice. Nikdy nerušit. */
+  :focus-visible {
+    outline: 3px solid var(--color-text);
+    outline-offset: 3px;
+  }
+
+  /* Na tmavém podkladu by tmavý outline zmizel */
+  .na-tmavem :focus-visible {
+    outline-color: var(--color-azurova);
+  }
+
+  ::selection {
+    background-color: var(--color-azurova);
+    color: var(--color-text);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ==========================================================================
+   Vlastní utility
+   ========================================================================== */
+
+/* Obsahový kontejner — max. 1440 px, okraj 20 px na mobilu, 64 px na počítači */
+@utility obal {
+  width: 100%;
+  max-width: var(--container-web);
+  margin-inline: auto;
+  padding-inline: var(--spacing-okraj);
+
+  @media (width >= 1024px) {
+    padding-inline: var(--spacing-okraj-pc);
+  }
+}
+
+/* Svislé odsazení sekce */
+@utility sekce {
+  padding-block: var(--spacing-sekce);
+
+  @media (width >= 1024px) {
+    padding-block: var(--spacing-sekce-pc);
+  }
+}
+
+/* Minimální klikací plocha 48 px — platí i pro položky v patičce a v menu */
+@utility klik {
+  min-height: var(--spacing-klik);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Skip link — první prvek stránky, viditelný až po zaměření klávesnicí */
+@utility skip-link {
+  position: absolute;
+  left: var(--spacing-okraj);
+  top: 0;
+  z-index: 100;
+  transform: translateY(-150%);
+  background-color: var(--color-text);
+  color: var(--color-azurova);
+  font-weight: 800;
+  padding: 0.875rem 1.5rem;
+  border-radius: 0 0 var(--radius-tlacitko) var(--radius-tlacitko);
+
+  &:focus {
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   Pohyb — jen hover 150 ms a posun o 3 px, a to jen když si to člověk nevypnul
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
