@@ -49,15 +49,15 @@ export async function proxy(request: NextRequest) {
   /*
     Poddoména administrace.
 
-    Dokud `NEXT_PUBLIC_ADMIN_URL` není vyplněná, nic z tohohle se neděje
+    Dokud `ADMIN_URL` není vyplněná, nic z tohohle se neděje
     a administrace zůstává na `/admin` jako dosud — díky tomu tahle změna
     nerozbije náhledové adresy `*.vercel.app`, na kterých se testuje.
 
     Neznámý hostitel (náhled, apex) se schválně obsluhuje jako web, aby se
     vývoj nezablokoval na nevyplněné proměnné.
   */
-  const hostAdmina = hostitelZAdresy(process.env.NEXT_PUBLIC_ADMIN_URL);
-  const hostWebu = hostitelZAdresy(process.env.NEXT_PUBLIC_WEB_URL);
+  const hostAdmina = hostitelZAdresy(process.env.ADMIN_URL);
+  const hostWebu = hostitelZAdresy(process.env.WEB_URL);
   const host = hostitel(request);
   const cesta = request.nextUrl.pathname;
   const miriDoAdmina =
@@ -74,7 +74,7 @@ export async function proxy(request: NextRequest) {
   if (hostWebu && host === hostWebu && miriDoAdmina && hostAdmina) {
     // Administrace má jednu adresu, ne dvě. Na webové doméně se na ni jen
     // ukáže cesta — obsah se odsud neobsluhuje.
-    const cil = new URL(process.env.NEXT_PUBLIC_ADMIN_URL!);
+    const cil = new URL(process.env.ADMIN_URL!);
     cil.pathname = cesta;
     return NextResponse.redirect(cil);
   }

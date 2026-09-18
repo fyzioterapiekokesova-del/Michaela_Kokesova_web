@@ -22,7 +22,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     níž tu nestačí — na poddoméně je administrace v kořeni, takže by se
     to pravidlo minulo cílem.
   */
-  const hostAdmina = process.env.NEXT_PUBLIC_ADMIN_URL?.trim();
+  const hostAdmina = process.env.ADMIN_URL?.trim();
   if (hostAdmina) {
     const host = (await headers()).get("host")?.split(":")[0]?.toLowerCase();
     try {
