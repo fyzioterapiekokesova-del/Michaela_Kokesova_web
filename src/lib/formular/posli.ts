@@ -13,7 +13,8 @@ import type { DataKontakt } from "./schema";
 const API = "https://api.resend.com/emails";
 
 type Email = {
-  komu: string;
+  /** Jedna adresa, nebo víc — zpráva pak přijde na všechny. */
+  komu: string | readonly string[];
   predmet: string;
   text: string;
   /** Adresa, na kterou se odpovídá — u zprávy pro Michaelu e-mail odesílatele. */
@@ -21,6 +22,20 @@ type Email = {
 };
 
 export class ChybaOdeslani extends Error {}
+
+/**
+ * Rozdělí zapsané příjemce na jednotlivé adresy.
+ *
+ * V administraci je to jedno textové pole, do kterého se dá napsat víc adres
+ * oddělených čárkou nebo středníkem. Rozdělení je tady, aby platilo stejně
+ * pro formulář i pro kontroly.
+ */
+export function rozdelPrijemce(hodnota: string): string[] {
+  return hodnota
+    .split(/[,;]/)
+    .map((a) => a.trim())
+    .filter((a) => a !== "");
+}
 
 async function posli(email: Email): Promise<void> {
   const klic = process.env.RESEND_API_KEY;
@@ -47,7 +62,7 @@ async function posli(email: Email): Promise<void> {
     },
     body: JSON.stringify({
       from: odesilatel,
-      to: [email.komu],
+      to: typeof email.komu === "string" ? [email.komu] : [...email.komu],
       subject: email.predmet,
       text: email.text,
       ...(email.odpovedetNa ? { reply_to: email.odpovedetNa } : {}),
@@ -61,7 +76,10 @@ async function posli(email: Email): Promise<void> {
 }
 
 /** Zpráva pro Michaelu. */
-export async function posliZpravu(data: DataKontakt, prijemce: string) {
+export async function posliZpravu(
+  data: DataKontakt,
+  prijemce: string | readonly string[],
+) {
   await posli({
     komu: prijemce,
     odpovedetNa: data.email,

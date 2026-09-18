@@ -8,6 +8,7 @@
 
 import { SCHEMA_KONTAKT } from "../src/lib/formular/schema.ts";
 import { zkusPusit } from "../src/lib/formular/omezeni.ts";
+import { rozdelPrijemce } from "../src/lib/formular/posli.ts";
 
 let spadlo = 0;
 
@@ -88,6 +89,31 @@ overit(
 
 const jinyKlic = zkusPusit(`test-${Math.random()}`, 5);
 overit("jiná adresa omezením zasažená není", jinyKlic.pusti);
+
+console.log("Příjemci zpráv z formuláře");
+overit(
+  "jedna adresa zůstane jedna",
+  rozdelPrijemce("nekdo@example.com").join("|") === "nekdo@example.com",
+);
+overit(
+  "dvě adresy oddělené čárkou se rozdělí",
+  rozdelPrijemce("a@example.com, b@example.cz").join("|") ===
+    "a@example.com|b@example.cz",
+);
+overit(
+  "středník funguje stejně jako čárka",
+  rozdelPrijemce("a@example.com; b@example.cz").length === 2,
+);
+overit(
+  "mezery navíc se oříznou — jinak by Resend adresu odmítl",
+  rozdelPrijemce("  a@example.com ,  b@example.cz  ").join("|") ===
+    "a@example.com|b@example.cz",
+);
+overit(
+  "čárka navíc nevyrobí prázdného příjemce",
+  rozdelPrijemce("a@example.com,,").length === 1,
+);
+overit("prázdné pole nevrátí nikoho", rozdelPrijemce("   ").length === 0);
 
 console.log(spadlo === 0 ? "\nVšechno prošlo." : `\n${spadlo} kontrol neprošlo.`);
 process.exit(spadlo === 0 ? 0 : 1);

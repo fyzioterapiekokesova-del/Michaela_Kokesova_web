@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 /**
  * Lišta se souhlasem s cookies a načtení měření.
@@ -114,8 +120,39 @@ function Lista({
   rozhodni: (v: "ano" | "ne") => void;
   zavri: () => void;
 }) {
+  const lista = useRef<HTMLDivElement>(null);
+
+  /*
+    Lišta je `fixed` u spodního okraje, takže překrývá konec stránky — a tam
+    je odesílací tlačítko formuláře a odkazy v patičce. Klik na ně by spadl
+    na lištu: nic by se nestalo a nic by se nevypsalo.
+
+    Proto se po dobu, co lišta visí, přidá spodku stránky odsazení o její
+    výšku. Měří se za běhu, protože na mobilu se text zalomí do víc řádků
+    a lišta je vyšší. Zadání to vyžaduje výslovně: lišta nesmí bránit
+    používání webu.
+  */
+  useEffect(() => {
+    const prvek = lista.current;
+    if (!prvek) return;
+
+    const zmer = () => {
+      document.body.style.paddingBottom = `${prvek.offsetHeight}px`;
+    };
+    zmer();
+
+    const sleduj = new ResizeObserver(zmer);
+    sleduj.observe(prvek);
+
+    return () => {
+      sleduj.disconnect();
+      document.body.style.paddingBottom = "";
+    };
+  }, []);
+
   return (
     <div
+      ref={lista}
       role="dialog"
       aria-label="Souhlas s měřením návštěvnosti"
       className="bg-text text-patka-text na-tmavem fixed inset-x-0 bottom-0 z-90 shadow-[0_-8px_30px_rgba(46,48,45,.25)]"

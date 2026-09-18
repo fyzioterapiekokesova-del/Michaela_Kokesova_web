@@ -4,7 +4,12 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SCHEMA_KONTAKT, type StavFormulare } from "@/lib/formular/schema";
 import { zkusPusit } from "@/lib/formular/omezeni";
-import { ChybaOdeslani, posliPotvrzeni, posliZpravu } from "@/lib/formular/posli";
+import {
+  ChybaOdeslani,
+  posliPotvrzeni,
+  posliZpravu,
+  rozdelPrijemce,
+} from "@/lib/formular/posli";
 import { nactiObsah } from "@/lib/obsah";
 import { text } from "@/lib/obsah/cteni";
 
@@ -76,9 +81,11 @@ export async function odeslatKontakt(
   }
 
   const kontakt = await nactiObsah("kontakt");
-  const prijemce = text(kontakt, "prijemce");
+  // V administraci je to jedno pole; víc adres se oddělí čárkou nebo
+  // středníkem a zpráva pak přijde na všechny.
+  const prijemce = rozdelPrijemce(text(kontakt, "prijemce"));
 
-  if (!prijemce) {
+  if (prijemce.length === 0) {
     console.error("Formulář nemá kam poslat zprávu — v obsahu chybí příjemce.");
     return {
       stav: "chyba",

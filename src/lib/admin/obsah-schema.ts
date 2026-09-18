@@ -372,7 +372,8 @@ export const SCHEMA: readonly Sekce[] = [
         druh: "text",
         jmeno: "prijemce",
         popisek: "Kam chodí zprávy z formuláře",
-        napoveda: "E-mailová adresa. Návštěvníkům se nikde nezobrazí.",
+        napoveda:
+          "E-mailová adresa. Návštěvníkům se nikde nezobrazí. Chcete-li zprávy na víc adres, oddělte je čárkou.",
         povinne: true,
         max: 120,
       },
