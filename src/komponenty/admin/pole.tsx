@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useId, useState, useTransition, type ReactNode } from "react";
 import { nahrajFotku } from "@/app/admin/akce/fotky";
+import { VyrezObrazku } from "@/komponenty/admin/vyrez-obrazku";
 import type { Pole } from "@/lib/admin/obsah-schema";
 import { CILE_ODKAZU } from "@/lib/navigace";
 import { adresaFotky } from "@/lib/supabase/nastaveni";
@@ -313,6 +314,18 @@ function PoleObrazku({
             Odebrat fotku
           </button>
         </div>
+      ) : null}
+
+      {cesta ? (
+        <VyrezObrazku
+          src={adresaFotky(cesta)}
+          varianta={pole.varianta}
+          pozice={hodnoty[pole.poziceJmeno]}
+          zoom={hodnoty[pole.zoomJmeno]}
+          zmen={zmen}
+          poziceJmeno={pole.poziceJmeno}
+          zoomJmeno={pole.zoomJmeno}
+        />
       ) : (
         <p className="text-text-doplnek mt-3 text-[1.0625rem]">
           Zatím tu žádná fotka není. Dokud ji nenahrajete, na webu se místo po
@@ -320,26 +333,39 @@ function PoleObrazku({
         </p>
       )}
 
+      {/*
+        Systémové pole pro výběr souboru je drobné a snadno se přehlédne —
+        vypadá jako „Choose File" kdesi v textu. Vstup proto zůstává, ale
+        schovaný, a klikacím prvkem je jeho popisek vysázený jako tlačítko.
+        Vstup je pořád v pořadí tabulátoru a čtečka ho přečte; ohnisko se
+        kreslí na tlačítko přes `focus-within`, jinak by nebylo vidět.
+      */}
       <div className="mt-4">
-        <label htmlFor={id} className="block font-bold">
+        <p className="font-bold">
           {cesta ? "Nahradit jinou fotkou" : "Nahrát fotku"}
-        </label>
+        </p>
         <p className="text-text-doplnek mt-1 text-[1.0625rem]">
           JPG, PNG nebo WEBP, nejvýš 5 MB.
         </p>
-        <input
-          id={id}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          disabled={nahrava}
-          onChange={(e) => {
-            const soubor = e.target.files?.[0];
-            if (soubor) posliNaServer(soubor);
-            // Vyprázdnit, ať jde nahrát stejný soubor znovu po chybě.
-            e.target.value = "";
-          }}
-          className="mt-2 block w-full text-[1.0625rem]"
-        />
+        <label
+          htmlFor={id}
+          className="klik rounded-tlacitko bg-azurova text-text hover:bg-text hover:text-azurova mt-2 cursor-pointer px-6 font-bold transition-colors duration-150 focus-within:outline-3 focus-within:outline-offset-3 focus-within:outline-current"
+        >
+          {nahrava ? "Nahrává se…" : "Vybrat fotku z počítače"}
+          <input
+            id={id}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            disabled={nahrava}
+            onChange={(e) => {
+              const soubor = e.target.files?.[0];
+              if (soubor) posliNaServer(soubor);
+              // Vyprázdnit, ať jde nahrát stejný soubor znovu po chybě.
+              e.target.value = "";
+            }}
+            className="sr-only"
+          />
+        </label>
         {nahrava ? <p className="mt-2 font-bold">Nahrává se…</p> : null}
         {chybaNahrani ? <p className="mt-2 font-bold">{chybaNahrani}</p> : null}
         {chyba ? <p className="mt-2 font-bold">{chyba}</p> : null}

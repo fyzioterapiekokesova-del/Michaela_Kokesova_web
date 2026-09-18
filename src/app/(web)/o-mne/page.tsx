@@ -13,6 +13,7 @@ import {
   seznam,
   text,
   textNeboNic,
+  vyrez,
 } from "@/lib/obsah/cteni";
 import { telHref, telText } from "@/lib/kontakt";
 
@@ -80,6 +81,7 @@ export default async function OMne() {
                 varianta="portret"
                 src={portret}
                 alt={text(o["o-mne"], "portret_popis")}
+                {...vyrez(o["o-mne"], "portret")}
                 priorita
               />
             </div>

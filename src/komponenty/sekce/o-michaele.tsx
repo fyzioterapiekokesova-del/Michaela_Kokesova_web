@@ -1,6 +1,6 @@
 import { Tlacitko } from "@/komponenty/tlacitko";
 import { ObrazoveMisto } from "@/komponenty/obrazove-misto";
-import { fotka, text, textNeboNic } from "@/lib/obsah/cteni";
+import { fotka, text, textNeboNic, vyrez } from "@/lib/obsah/cteni";
 import type { Obsah } from "@/lib/obsah/vychozi";
 
 /**
@@ -37,6 +37,7 @@ export function OMichaele({ obsah }: { obsah: Obsah }) {
               varianta="portret"
               src={portret}
               alt={text(obsah, "portret_popis")}
+              {...vyrez(obsah, "portret")}
             />
           </div>
         ) : null}

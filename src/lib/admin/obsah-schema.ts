@@ -42,6 +42,15 @@ export type Pole =
        * teprve doplní.
        */
       popisPole: string;
+      /**
+       * Jména polí s výřezem — ohnisko (`"50% 30%"`) a přiblížení.
+       *
+       * Ve formuláři se nevykreslují jako samostatná pole; obsluhuje je
+       * ovládací prvek u fotky. Ve schématu jsou proto, aby o nich vědělo
+       * slučování — jinak by uložení textů výřez zahodilo.
+       */
+      poziceJmeno: string;
+      zoomJmeno: string;
     })
   | (Zaklad & { druh: "prepinac"; vychozi: boolean })
   | (Zaklad & { druh: "vyber"; moznosti: readonly Moznost[]; vychozi: string })
@@ -90,6 +99,8 @@ function obrazek(
       varianta,
       napoveda,
       popisPole: `${jmeno}_popis`,
+      poziceJmeno: `${jmeno}_pozice`,
+      zoomJmeno: `${jmeno}_zoom`,
     },
     {
       druh: "text",
@@ -303,6 +314,8 @@ export const SCHEMA: readonly Sekce[] = [
             popisek: "Fotka",
             varianta: "galerie",
             popisPole: "popis",
+            poziceJmeno: "pozice",
+            zoomJmeno: "zoom",
           },
           {
             druh: "text",
@@ -496,6 +509,8 @@ export const SCHEMA: readonly Sekce[] = [
             popisek: "Fotka",
             varianta: "galerie",
             popisPole: "popis",
+            poziceJmeno: "pozice",
+            zoomJmeno: "zoom",
           },
           { druh: "text", jmeno: "popis", popisek: "Popisek fotky", max: 160 },
         ],

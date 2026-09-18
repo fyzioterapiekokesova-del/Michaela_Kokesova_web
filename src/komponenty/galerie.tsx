@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { pozicePropStyl, stylPriblizeni } from "@/lib/obrazky/pozice";
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -19,6 +20,9 @@ export type Fotka = {
   src: string;
   /** Popisek. V administraci povinný — bez něj se fotka neuloží. */
   alt: string;
+  /** Výřez z administrace. Platí jen pro náhled, ne pro zvětšenou fotku. */
+  pozice?: string;
+  zoom?: number;
 };
 
 export function Galerie({ fotky }: { fotky: readonly Fotka[] }) {
@@ -50,14 +54,26 @@ export function Galerie({ fotky }: { fotky: readonly Fotka[] }) {
               className="rounded-dlazdice relative block aspect-[4/3] w-full overflow-hidden"
             >
               <span className="sr-only">Zvětšit fotku: {fotka.alt}</span>
-              <Image
-                src={fotka.src}
-                alt={fotka.alt}
-                fill
-                loading="lazy"
-                sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
-                className="object-cover transition-transform duration-150 hover:scale-[1.02]"
-              />
+              {/*
+                Přiblížení sedí na obalu, ne na fotce. Fotka má vlastní
+                `transform` — při najetí myší se zvětší — a dva transformy na
+                jednom prvku nejdou, druhý by ten první přepsal. Na obalu se
+                naopak násobí, takže funguje výřez i zvětšení při najetí.
+              */}
+              <span
+                className="absolute inset-0"
+                style={stylPriblizeni(fotka.pozice, fotka.zoom)}
+              >
+                <Image
+                  src={fotka.src}
+                  alt={fotka.alt}
+                  fill
+                  loading="lazy"
+                  sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-150 hover:scale-[1.02]"
+                  style={{ objectPosition: pozicePropStyl(fotka.pozice) }}
+                />
+              </span>
             </button>
           </li>
         ))}

@@ -2,7 +2,7 @@ import { Tlacitko } from "@/komponenty/tlacitko";
 import { ObrazoveMisto } from "@/komponenty/obrazove-misto";
 import { Poznamka } from "@/komponenty/karty";
 import { telHref, telText } from "@/lib/kontakt";
-import { fotka, text, textNeboNic } from "@/lib/obsah/cteni";
+import { fotka, text, textNeboNic, vyrez } from "@/lib/obsah/cteni";
 import type { Obsah } from "@/lib/obsah/vychozi";
 
 /**
@@ -79,6 +79,7 @@ export function Hero({ obsah, telefon }: { obsah: Obsah; telefon?: string }) {
               vyplneni={cele ? "cele" : "orez"}
               src={obrazek}
               alt={text(obsah, "fotka_popis")}
+              {...vyrez(obsah, "fotka")}
               priorita
             />
           </div>

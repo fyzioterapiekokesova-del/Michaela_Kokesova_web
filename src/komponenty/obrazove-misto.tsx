@@ -1,5 +1,7 @@
 import Image from "next/image";
 
+import { stylVyrezu } from "@/lib/obrazky/pozice";
+
 /**
  * Obrazové místo.
  *
@@ -50,6 +52,13 @@ type Vlastnosti = {
   alt?: string;
   /** Náhled v administraci — ukáže šedou plochu s popiskem místo prázdna. */
   nahled?: boolean;
+  /**
+   * Výřez nastavený v administraci — ohnisko ve tvaru `"50% 30%"`.
+   * Když chybí, použije se výchozí ohnisko varianty (hero má `50% 12%`).
+   */
+  pozice?: string;
+  /** Přiblížení z administrace, 1 = beze změny. */
+  zoom?: number;
   /** Fotka nad prvním ohybem se načítá přednostně, ostatní odloženě. */
   priorita?: boolean;
   /** Vlastní text do šedé plochy v náhledu. */
@@ -62,6 +71,8 @@ export function ObrazoveMisto({
   src,
   alt,
   nahled = false,
+  pozice,
+  zoom,
   priorita = false,
   popisPrazdneho,
 }: Vlastnosti) {
@@ -99,10 +110,13 @@ export function ObrazoveMisto({
         loading={priorita ? undefined : "lazy"}
         sizes="(max-width: 1023px) 100vw, 50vw"
         className={cele ? "object-contain" : "object-cover"}
+        /*
+          Výřez z administrace. Když ho klientka nenastavila, zůstává výchozí
+          ohnisko varianty — u hero je to `50% 12%`, aby se z portrétu na výšku
+          neuřízla hlava. U `cele` se nic neořezává, takže ani nastavovat není co.
+        */
         style={
-          !cele && nastaveni.pozice
-            ? { objectPosition: nastaveni.pozice }
-            : undefined
+          cele ? undefined : stylVyrezu(pozice ?? nastaveni.pozice, zoom)
         }
       />
     </div>

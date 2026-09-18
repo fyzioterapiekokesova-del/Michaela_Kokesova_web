@@ -29,8 +29,20 @@ export default async function ChranenyLayout({
             <span className="text-text-doplnek text-[1.0625rem]">
               {admin.email}
             </span>
-            <Link href="/" className="klik text-[1.0625rem] underline">
+            {/*
+              Nová karta schválně: rozdělaná úprava v administraci se nesmí
+              ztratit jen proto, že se šla majitelka podívat na web.
+              `rel="noopener"` proto, že otevřená karta jinak dosáhne přes
+              `window.opener` zpátky na administraci.
+            */}
+            <Link
+              href="/"
+              target="_blank"
+              rel="noopener"
+              className="klik text-[1.0625rem] underline"
+            >
               Zobrazit web
+              <span className="sr-only"> (otevře se v nové kartě)</span>
             </Link>
             <form action={odhlasit}>
               <button type="submit" className="klik text-[1.0625rem] underline">

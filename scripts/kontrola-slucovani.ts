@@ -37,6 +37,8 @@ const puvodniHero = {
   rozvrzeni: "dva-sloupce",
   fotka: "hero/2026-fotka.webp",
   fotka_popis: "Michaela ve své ordinaci",
+  fotka_pozice: "30% 70%",
+  fotka_zoom: 1.5,
 };
 
 // Formulář poslal jen texty — klíč `fotka` v něm vůbec není.
@@ -53,6 +55,56 @@ if (jenTexty.stav === "ok") {
     jenTexty.hodnota.fotka === "hero/2026-fotka.webp",
   );
   overit("nový nadpis se uložil", jenTexty.hodnota.nadpis === "Nový nadpis");
+  // Výřez je stejně křehký jako cesta k fotce — nastavuje se jinde než texty,
+  // takže by ho uložení textů zahodilo úplně stejně snadno.
+  overit(
+    "nastavený výřez zůstal zachovaný",
+    jenTexty.hodnota.fotka_pozice === "30% 70%",
+  );
+  overit("přiblížení zůstalo zachované", jenTexty.hodnota.fotka_zoom === 1.5);
+}
+
+/* 1b. Odebrání fotky musí odebrat i její výřez ----------------------------- */
+
+const odebraniSVyrezem = zvalidujASluc(
+  hero,
+  { nadpis: "Nadpis", tlacitko_1: "Zavolat", rozvrzeni: "jeden-sloupec", fotka: "", fotka_popis: "" },
+  puvodniHero,
+);
+
+if (odebraniSVyrezem.stav === "ok") {
+  overit(
+    "po odebrání fotky se výřez vrátí na střed, ať se nezdědí na další fotku",
+    odebraniSVyrezem.hodnota.fotka_pozice === "50% 50%" &&
+      odebraniSVyrezem.hodnota.fotka_zoom === 1,
+  );
+}
+
+/* 1c. Podvržené ohnisko se nesmí uložit ------------------------------------ */
+
+const podvrzeny = zvalidujASluc(
+  hero,
+  {
+    nadpis: "Nadpis",
+    tlacitko_1: "Zavolat",
+    rozvrzeni: "dva-sloupce",
+    fotka: "hero/2026-fotka.webp",
+    fotka_popis: "Michaela",
+    fotka_pozice: "50% 50%; background: url(zlo)",
+    fotka_zoom: 999,
+  },
+  puvodniHero,
+);
+
+if (podvrzeny.stav === "ok") {
+  overit(
+    "podvržené ohnisko se zahodí a uloží se střed",
+    podvrzeny.hodnota.fotka_pozice === "50% 50%",
+  );
+  overit(
+    "nesmyslné přiblížení se srazí na maximum",
+    podvrzeny.hodnota.fotka_zoom === 4,
+  );
 }
 
 /* 2. Prázdný řetězec fotku odebere ----------------------------------------- */

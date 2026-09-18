@@ -49,11 +49,37 @@ export function fotka(obsah: Obsah, klic: string): string | undefined {
   return adresaFotky(cesta);
 }
 
+/**
+ * Výřez fotky nastavený v administraci.
+ *
+ * Jména polí drží pomocník `obrazek()` v `obsah-schema.ts`: k fotce `portret`
+ * patří `portret_pozice` a `portret_zoom`. Hodnoty se tady nekontrolují —
+ * dělá to `pozicePropStyl` a `zoomPropStyl` až při skládání stylu, takže
+ * rozbitá hodnota skončí na středu a fotka se vždycky ukáže.
+ */
+export function vyrez(
+  obsah: Obsah,
+  klic: string,
+): { pozice?: string; zoom?: number } {
+  const pozice = obsah[`${klic}_pozice`];
+  const zoom = obsah[`${klic}_zoom`];
+  return {
+    pozice: typeof pozice === "string" ? pozice : undefined,
+    zoom: typeof zoom === "number" ? zoom : undefined,
+  };
+}
+
 /** Fotky ze seznamu — vrátí jen ty, které opravdu mají cestu i popisek. */
 export function fotkyZeSeznamu(
   polozky: readonly Obsah[],
-): { src: string; alt: string }[] {
+): { src: string; alt: string; pozice?: string; zoom?: number }[] {
   return polozky
-    .map((p) => ({ src: fotka(p, "cesta"), alt: text(p, "popis") }))
-    .filter((p): p is { src: string; alt: string } => Boolean(p.src && p.alt));
+    .map((p) => ({
+      src: fotka(p, "cesta"),
+      alt: text(p, "popis"),
+      ...vyrez(p, "cesta"),
+    }))
+    .filter((p): p is { src: string; alt: string; pozice?: string; zoom?: number } =>
+      Boolean(p.src && p.alt),
+    );
 }

@@ -1,4 +1,10 @@
 import { jeZnamaStranka } from "../navigace.ts";
+import {
+  VYCHOZI_POZICE,
+  VYCHOZI_ZOOM,
+  pozicePropStyl,
+  zoomPropStyl,
+} from "../obrazky/pozice.ts";
 import type { Pole, Sekce } from "./obsah-schema";
 
 /**
@@ -135,16 +141,46 @@ function projdiPole(
       }
 
       case "obrazek": {
+        /*
+          Výřez fotky — ohnisko a přiblížení. Řeší se tady, ne jako
+          samostatná pole, protože bez fotky nemají smysl.
+
+          Cokoliv, co neprojde kontrolou tvaru, se zahodí a padne na střed.
+          Ta hodnota se vypisuje do stylu stránky, takže se z formuláře
+          nesmí převzít jen tak.
+        */
+        const prisloPozice = Object.prototype.hasOwnProperty.call(
+          nove,
+          pole.poziceJmeno,
+        );
+        const prisloZoom = Object.prototype.hasOwnProperty.call(
+          nove,
+          pole.zoomJmeno,
+        );
+        const pozice = prisloPozice
+          ? pozicePropStyl(nove[pole.poziceJmeno])
+          : pozicePropStyl(puvodni[pole.poziceJmeno]);
+        const zoom = prisloZoom
+          ? zoomPropStyl(nove[pole.zoomJmeno])
+          : zoomPropStyl(puvodni[pole.zoomJmeno]);
+
         // Klíč vůbec nepřišel → formulář fotku neřešil, původní zůstává.
         if (!prislo) {
           if (typeof stare === "string") vysledek[pole.jmeno] = stare;
+          vysledek[pole.poziceJmeno] = pozice;
+          vysledek[pole.zoomJmeno] = zoom;
           break;
         }
         const hodnota = text(surove);
         if (hodnota === "") {
+          // Fotka pryč → výřez taky. Jinak by se zdědil na fotku další.
           vysledek[pole.jmeno] = "";
+          vysledek[pole.poziceJmeno] = VYCHOZI_POZICE;
+          vysledek[pole.zoomJmeno] = VYCHOZI_ZOOM;
           break;
         }
+        vysledek[pole.poziceJmeno] = pozice;
+        vysledek[pole.zoomJmeno] = zoom;
         if (!CESTA_FOTKY.test(hodnota) || hodnota.includes("..")) {
           chyby.push({
             cesta,

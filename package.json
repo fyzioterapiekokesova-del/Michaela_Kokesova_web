@@ -11,10 +11,11 @@
     "typecheck": "next typegen && tsc --noEmit",
     "kontrola": "node scripts/kontrola-slucovani.ts",
     "kontrola:formular": "node scripts/kontrola-formulare.ts",
-    "kontrola:vse": "npm run kontrola && npm run kontrola:formular && npm run kontrola:seo && npm run kontrola:obrazky",
+    "kontrola:vse": "npm run kontrola && npm run kontrola:formular && npm run kontrola:seo && npm run kontrola:obrazky && npm run kontrola:pozice",
     "kontrola:seo": "node scripts/kontrola-seo.ts",
     "admin": "node --env-file=.env.local scripts/zaloz-admina.ts",
-    "kontrola:obrazky": "node scripts/kontrola-obrazku.ts"
+    "kontrola:obrazky": "node scripts/kontrola-obrazku.ts",
+    "kontrola:pozice": "node scripts/kontrola-pozice.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",

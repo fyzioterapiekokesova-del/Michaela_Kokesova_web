@@ -5,7 +5,7 @@ import { ObrazoveMisto } from "@/komponenty/obrazove-misto";
 import { PrazdnyStav } from "@/komponenty/karty";
 import { SLUZBY } from "@/lib/navigace";
 import { telHref, telText } from "@/lib/kontakt";
-import { fotka, seznam, text, textNeboNic } from "@/lib/obsah/cteni";
+import { fotka, seznam, text, textNeboNic, vyrez } from "@/lib/obsah/cteni";
 import type { Obsah } from "@/lib/obsah/vychozi";
 
 /**
@@ -65,6 +65,7 @@ export function StrankaSluzby({
             varianta="galerie"
             src={obrazek}
             alt={text(obsah, "fotka_popis")}
+            {...vyrez(obsah, "fotka")}
             priorita
           />
         </div>
