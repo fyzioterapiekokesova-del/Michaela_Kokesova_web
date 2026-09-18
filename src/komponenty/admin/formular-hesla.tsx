@@ -40,14 +40,14 @@ export function FormularHesla() {
           Nové heslo
         </label>
         <p className="text-text-doplnek mt-1 text-[1.0625rem]">
-          Aspoň 12 znaků. Nejlíp krátká věta, kterou si zapamatujete.
+          Aspoň 6 znaků. Nejlíp krátká věta, kterou si zapamatujete.
         </p>
         <input
           id="heslo"
           name="heslo"
           type="password"
           autoComplete="new-password"
-          minLength={12}
+          minLength={6}
           required
           className={VSTUP}
         />
@@ -62,7 +62,7 @@ export function FormularHesla() {
           name="heslo_znovu"
           type="password"
           autoComplete="new-password"
-          minLength={12}
+          minLength={6}
           required
           className={VSTUP}
         />

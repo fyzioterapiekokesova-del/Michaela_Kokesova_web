@@ -16,6 +16,17 @@ const supabaseHost = (() => {
 })();
 
 const nextConfig: NextConfig = {
+  /**
+   * Fotky se nahrávají Server Action a ta má ve výchozím stavu strop 1 MB.
+   * Běžná fotka z telefonu je větší, takže nahrávání padalo dřív, než se
+   * vůbec spustil náš kód — a člověk viděl obecnou chybu místo vysvětlení.
+   *
+   * Strop je schválně nad našich 5 MB (`MAX_BAJTU` v lib/admin/obrazky.ts),
+   * aby větší soubor odmítla naše kontrola svou hláškou, ne framework.
+   */
+  experimental: {
+    serverActions: { bodySizeLimit: "6mb" },
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: supabaseHost

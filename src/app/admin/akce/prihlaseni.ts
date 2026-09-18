@@ -148,8 +148,15 @@ export async function posliOdkazNaHeslo(
 
 export type StavHesla = { stav: "prazdno" | "chyba"; zprava?: string };
 
-/** Dvanáct znaků. Delší heslo je jediná ochrana, která vydrží hádání. */
-const NEJKRATSI_HESLO = 12;
+/**
+ * Šest znaků — stejná mez jako v Supabase, na přání klientky.
+ *
+ * Je to málo. Přihlašovací stránka je veřejně dostupná a jediné, co proti
+ * hádání zbývá, je omezení pěti pokusů z jedné IP za 15 minut — rozprostřený
+ * útok z více adres tím neprojde zpomalený. Až se heslo bude předávat
+ * majitelce, stojí za to doporučit jí delší.
+ */
+const NEJKRATSI_HESLO = 6;
 
 export async function nastavNoveHeslo(
   _predchozi: StavHesla,

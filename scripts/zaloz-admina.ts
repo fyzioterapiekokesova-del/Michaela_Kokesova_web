@@ -4,12 +4,19 @@
  * Veřejná registrace je v Supabase vypnutá, takže účet nejde vytvořit
  * z webu — zakládá se odsud, pod servisním klíčem.
  *
- * **Heslo se nikde nevypisuje a nikam neposílá.** Účet vznikne s náhodným
- * heslem, které nikdo nezná, a Michaele odejde e-mail s odkazem, kterým si
- * nastaví vlastní. Odkaz platí krátce a dá se použít jednou.
+ * **Heslo se nikde nevypisuje.** Jsou dva způsoby, jak ho nastavit:
+ *
+ * 1. Bez `ADMIN_PASSWORD` — účet vznikne s náhodným heslem, které nikdo nezná,
+ *    a na e-mail odejde odkaz, kterým si majitelka nastaví vlastní. Odkaz platí
+ *    krátce a dá se použít jednou. **Takhle se účet předává klientce.**
+ *
+ * 2. S `ADMIN_PASSWORD` v `.env.local` — heslo se nastaví rovnou a žádný
+ *    e-mail neodejde. Zkratka pro vývoj a testování, kdy odkaz z e-mailu
+ *    překáží. Heslo zná ten, kdo ho do `.env.local` napsal — před předáním
+ *    ho majitelka musí změnit, jinak ho zná i vývojářka.
  *
  * Skript se dá pustit opakovaně: když účet už existuje, jen doplní řádek
- * v tabulce `admini` a pošle nový odkaz.
+ * v tabulce `admini` a nastaví heslo nebo pošle nový odkaz.
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -18,6 +25,10 @@ const URL_PROJEKTU = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVISNI_KLIC = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const EMAIL = process.env.ADMIN_EMAIL;
 const ADRESA_WEBU = process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000";
+const HESLO = process.env.ADMIN_PASSWORD;
+
+/** Stejná dolní mez jako ve formuláři na nové heslo (prihlaseni.ts). */
+const NEJKRATSI_HESLO = 6;
 
 function konec(zprava: string): never {
   console.error(zprava);
@@ -33,6 +44,15 @@ if (!URL_PROJEKTU || !SERVISNI_KLIC) {
 
 if (!EMAIL) {
   konec("Chybí ADMIN_EMAIL v .env.local — doplňte e-mail administrátorky.");
+}
+
+// Stejná mez jako ve formuláři na změnu hesla a jako v Supabase. Rozejít se
+// v tomhle znamená účet, který jde založit a nejde si v něm změnit heslo.
+if (HESLO !== undefined && HESLO.length < NEJKRATSI_HESLO) {
+  konec(
+    `ADMIN_PASSWORD je kratší než ${NEJKRATSI_HESLO} znaků. ` +
+      "Delší heslo, prosím — stejnou mez hlídá i formulář v administraci.",
+  );
 }
 
 const supabase = createClient(URL_PROJEKTU, SERVISNI_KLIC, {
@@ -86,6 +106,20 @@ async function main() {
     );
   }
   console.log("Oprávnění administrátorky zapsáno.");
+
+  // Heslo z .env.local: nastaví se rovnou a e-mail neodchází. Zkratka pro
+  // testování — hodnota se nevypisuje, aby neskončila v přepisu konzole.
+  if (HESLO) {
+    const { error } = await supabase.auth.admin.updateUserById(id!, {
+      password: HESLO,
+    });
+    if (error) konec(`Heslo se nepodařilo nastavit: ${error.message}`);
+    console.log(
+      "Heslo nastaveno podle ADMIN_PASSWORD. Žádný e-mail neodešel.\n" +
+        "Před předáním klientce musí být změněné — teď ho znáte i vy.",
+    );
+    return;
+  }
 
   // Odkaz na nastavení hesla. Heslo samo neodchází nikdy.
   const { error: chybaOdkazu } = await supabase.auth.resetPasswordForEmail(email, {
