@@ -44,7 +44,9 @@ export async function odeslatKontakt(
     for (const chyba of vysledek.error.issues) {
       const pole = chyba.path[0];
       if (pole === "web") {
-        // Past sklapla. Robotovi se nevysvětluje, co udělal špatně.
+        // Past sklapla. Robotovi se nevysvětluje, co udělal špatně —
+        // do logu se to ale zapíše, aby šlo poznat past od skutečné chyby.
+        console.warn("Formulář: sklapla past na roboty (pole web vyplněné).");
         return {
           stav: "chyba",
           zprava: "Zprávu se nepodařilo odeslat. Zkuste to prosím znovu.",
@@ -63,7 +65,14 @@ export async function odeslatKontakt(
     return { stav: "chyba", chyby, hodnoty };
   }
 
-  // Omezení frekvence — pět zpráv z jedné adresy za hodinu bohatě stačí.
+  /*
+    Omezení frekvence až tady, po validaci.
+
+    Dřív se počítal každý pokus, i ten, který spadl na překlepu v e-mailu.
+    Kdo se pětkrát upsal, byl na hodinu zamčený — a to na webu, kde je
+    formulář jedna ze dvou cest, jak se ozvat. Počítají se proto jen pokusy,
+    které došly až k odeslání; robot se zprávou v pořádku se počítá dál.
+  */
   const hlavicky = await headers();
   const ip =
     hlavicky.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -72,6 +81,9 @@ export async function odeslatKontakt(
 
   const pusteno = zkusPusit(`kontakt:${ip}`, 5);
   if (!pusteno.pusti) {
+    console.warn(
+      `Formulář: omezení frekvence zabralo, další pokus za ${pusteno.zaSekund} s.`,
+    );
     return {
       stav: "chyba",
       zprava:

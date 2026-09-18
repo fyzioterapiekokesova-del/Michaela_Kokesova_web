@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId } from "react";
+import { useActionState, useEffect, useId, useRef } from "react";
 import { odeslatKontakt } from "@/app/akce/kontakt";
 import type { StavFormulare } from "@/lib/formular/schema";
 import { Tlacitko } from "./tlacitko";
@@ -22,8 +22,38 @@ const VYCHOZI: StavFormulare = { stav: "prazdny" };
 export function FormularKontakt() {
   const [stav, akce, ceka] = useActionState(odeslatKontakt, VYCHOZI);
   const id = useId();
+  const hlaska = useRef<HTMLParagraphElement>(null);
 
   const h = stav.hodnoty;
+
+  /*
+    Doskrolovat na chybu.
+
+    Hláška je nad formulářem, ale odesílací tlačítko je dole — po odeslání
+    se stránka neposune, takže chyba naskočila mimo obrazovku a zvenčí to
+    vypadalo, že se nestalo vůbec nic. Ohnisko se zároveň přesune na hlášku,
+    aby ji přečetla i čtečka a aby se dalo pokračovat tabulátorem.
+  */
+  useEffect(() => {
+    if (stav.stav !== "chyba") return;
+
+    if (stav.zprava) {
+      hlaska.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+      hlaska.current?.focus();
+      return;
+    }
+
+    // Chyba u konkrétního pole — ohnisko na první z nich, v pořadí formuláře.
+    // Odesílá se zdola, takže chyba u jména je jinak taky mimo obrazovku.
+    const prvni = (["jmeno", "email", "telefon", "zprava"] as const).find(
+      (p) => stav.chyby?.[p],
+    );
+    if (!prvni) return;
+
+    const pole = document.getElementById(`${id}-${prvni}`);
+    pole?.scrollIntoView({ block: "center", behavior: "smooth" });
+    pole?.focus();
+  }, [stav, id]);
 
   return (
     <form action={akce} noValidate className="bg-plocha rounded-dlazdice p-7 lg:p-10">
@@ -36,7 +66,9 @@ export function FormularKontakt() {
 
       {stav.zprava ? (
         <p
+          ref={hlaska}
           role="alert"
+          tabIndex={-1}
           className="bg-povrch rounded-karta text-telo lg:text-telo-pc mt-6 px-5 py-4 font-bold"
         >
           {stav.zprava}
