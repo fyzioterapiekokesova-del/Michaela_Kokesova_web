@@ -116,18 +116,41 @@ export function FormularKontakt() {
         />
       </div>
 
-      {/* Past na roboty. Člověk tohle pole nevidí a nedostane se do něj
-          ani tabulátorem, takže ho nikdy nevyplní. */}
-      <div aria-hidden className="absolute left-[-9999px] h-px w-px overflow-hidden">
-        <label htmlFor={`${id}-web`}>Webová stránka</label>
+      {/*
+        Past na roboty.
+
+        Dřív se pole jmenovalo `web` a mělo popisek „Webová stránka".
+        To si našel správce hesel i automatické doplňování prohlížeče
+        a vyplnil ho — past pak sklapla na skutečném člověku, zpráva se
+        neodeslala a jediné, co ten člověk viděl, bylo že stránka problikla.
+
+        Proto tu teď není popisek, jméno pole nic neznamená a skrývá se
+        `display:none`: doplňování prohlížeče takové pole přeskočí,
+        odesílá se ale dál, takže robota pořád chytí.
+      */}
+      <div aria-hidden hidden>
         <input
-          id={`${id}-web`}
+          id={`${id}-kontrola`}
           type="text"
-          name="web"
+          name="kontrola"
           tabIndex={-1}
           autoComplete="off"
         />
       </div>
+
+      {/*
+        Hláška je i tady, hned u tlačítka.
+
+        Nahoře nad formulářem ji vidí jen ten, komu běží JavaScript — tomu
+        se na ni doskroluje. Bez něj se formulář odešle nastraro, stránka
+        se načte znovu od vrcholu a hláška zůstane kus nad obrazovkou:
+        zvenčí to vypadá, že se nestalo vůbec nic.
+      */}
+      {stav.zprava ? (
+        <p className="bg-povrch rounded-karta text-telo lg:text-telo-pc mt-7 px-5 py-4 font-bold">
+          {stav.zprava}
+        </p>
+      ) : null}
 
       <div className="mt-7">
         <Tlacitko typ="submit" zablokovano={ceka} akce="formular-odeslat">

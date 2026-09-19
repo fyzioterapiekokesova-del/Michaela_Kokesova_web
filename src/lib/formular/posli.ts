@@ -37,9 +37,36 @@ export function rozdelPrijemce(hodnota: string): string[] {
     .filter((a) => a !== "");
 }
 
+/**
+ * Adresa odesílatele z proměnné prostředí, očištěná.
+ *
+ * Hodnota se do Vercelu vkládá ručně a dvakrát se stalo, že se do ní dostaly
+ * obalující uvozovky nebo zalomení řádku. Resend na to odpoví 422
+ * `Invalid \`from\` field` a formulář hlásí obecnou chybu — hodinu se pak
+ * hledá něco, co je jen překlep v nastavení. Očistí se to tady, a když ani
+ * po očištění netrefí tvar `e@mail` nebo `Jméno <e@mail>`, řekne se to
+ * do logu jmenovitě.
+ */
+function adresaOdesilatele(): string | undefined {
+  const syrova = process.env.RESEND_FROM?.trim();
+  if (!syrova) return undefined;
+
+  // Uvozovky kolem celé hodnoty — pozůstatek kopírování z .env souboru.
+  const bezUvozovek = /^(["'])([\s\S]*)\1$/.exec(syrova)?.[2]?.trim() ?? syrova;
+
+  if (!/^(?:[^<>@\s]+@[^<>@\s]+|.+<[^<>@\s]+@[^<>@\s]+>)$/.test(bezUvozovek)) {
+    console.error(
+      "RESEND_FROM nemá tvar `e@mail` ani `Jméno <e@mail>`. " +
+        "Zkontrolujte tu proměnnou v nastavení nasazení — Resend ji odmítne.",
+    );
+  }
+
+  return bezUvozovek;
+}
+
 async function posli(email: Email): Promise<void> {
   const klic = process.env.RESEND_API_KEY;
-  const odesilatel = process.env.RESEND_FROM;
+  const odesilatel = adresaOdesilatele();
 
   if (!klic || !odesilatel) {
     // V produkci je tichý výpadek to nejhorší, co se může stát — člověk by

@@ -36,17 +36,17 @@ export async function odeslatKontakt(
 
   const vysledek = SCHEMA_KONTAKT.safeParse({
     ...hodnoty,
-    web: String(formular.get("web") ?? ""),
+    kontrola: String(formular.get("kontrola") ?? ""),
   });
 
   if (!vysledek.success) {
     const chyby: StavFormulare["chyby"] = {};
     for (const chyba of vysledek.error.issues) {
       const pole = chyba.path[0];
-      if (pole === "web") {
+      if (pole === "kontrola") {
         // Past sklapla. Robotovi se nevysvětluje, co udělal špatně —
         // do logu se to ale zapíše, aby šlo poznat past od skutečné chyby.
-        console.warn("Formulář: sklapla past na roboty (pole web vyplněné).");
+        console.warn("Formulář: sklapla past na roboty (skryté pole vyplněné).");
         return {
           stav: "chyba",
           zprava: "Zprávu se nepodařilo odeslat. Zkuste to prosím znovu.",

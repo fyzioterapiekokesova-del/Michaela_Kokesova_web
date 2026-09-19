@@ -25,7 +25,7 @@ const platne = {
   email: "jana@example.cz",
   telefon: "728 234 820",
   zprava: "Dobrý den, ráda bych se objednala.",
-  web: "",
+  kontrola: "",
 };
 
 overit("platná zpráva projde", SCHEMA_KONTAKT.safeParse(platne).success);
@@ -60,7 +60,7 @@ overit(
 );
 overit(
   "vyplněná past na roboty neprojde",
-  !SCHEMA_KONTAKT.safeParse({ ...platne, web: "http://spam.example" }).success,
+  !SCHEMA_KONTAKT.safeParse({ ...platne, kontrola: "http://spam.example" }).success,
 );
 overit(
   "moc dlouhá zpráva neprojde",

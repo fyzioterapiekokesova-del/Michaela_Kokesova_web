@@ -43,8 +43,19 @@ export const SCHEMA_KONTAKT = z.object({
     .min(5, "Napište prosím pár slov, s čím vám můžu pomoct.")
     .max(2000, "Zpráva je moc dlouhá. Zkuste ji zkrátit."),
 
-  // Past na roboty. Člověk tohle pole nevidí, takže ho nevyplní.
-  web: z.string().max(0, "Formulář se nepodařilo odeslat.").optional().default(""),
+  /*
+    Past na roboty.
+
+    Jmenuje se schválně nicneříkajícím `kontrola`, ne `web`: pole jménem
+    „web" s popiskem „Webová stránka" vyplní správci hesel a automatické
+    doplňování prohlížeče. Past pak sklapla na skutečném člověku, zpráva
+    se neodeslala a jediné, co se stalo, bylo že stránka problikla.
+  */
+  kontrola: z
+    .string()
+    .max(0, "Formulář se nepodařilo odeslat.")
+    .optional()
+    .default(""),
 });
 
 export type DataKontakt = z.infer<typeof SCHEMA_KONTAKT>;
