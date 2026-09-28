@@ -19,12 +19,22 @@ import { Tlacitko } from "./tlacitko";
 
 const VYCHOZI: StavFormulare = { stav: "prazdny" };
 
+const POPISKY = {
+  jmeno: "jméno",
+  email: "e-mail",
+  telefon: "telefon",
+  zprava: "zprávu",
+} as const;
+
 export function FormularKontakt() {
   const [stav, akce, ceka] = useActionState(odeslatKontakt, VYCHOZI);
   const id = useId();
   const hlaska = useRef<HTMLParagraphElement>(null);
 
   const h = stav.hodnoty;
+  const chybnaPole = (["jmeno", "email", "telefon", "zprava"] as const)
+    .filter((p) => stav.chyby?.[p])
+    .map((p) => POPISKY[p]);
 
   /*
     Doskrolovat na chybu.
@@ -110,7 +120,6 @@ export function FormularKontakt() {
           jmeno="zprava"
           popisek="Zpráva"
           viceradkovy
-          povinne
           vychozi={h?.zprava}
           chyba={stav.chyby?.zprava}
         />
@@ -146,9 +155,15 @@ export function FormularKontakt() {
         se načte znovu od vrcholu a hláška zůstane kus nad obrazovkou:
         zvenčí to vypadá, že se nestalo vůbec nic.
       */}
-      {stav.zprava ? (
-        <p className="bg-povrch rounded-karta text-telo lg:text-telo-pc mt-7 px-5 py-4 font-bold">
-          {stav.zprava}
+      {/*
+        Chyby u polí se shrnou i sem. Kdo klikne na Odeslat a díváme se mu
+        pod ruku, musí hned vidět, že zpráva neodešla — hláška pod polem
+        o kus výš nestačila a zvenčí to vypadalo, že formulář jen problikl.
+      */}
+      {stav.zprava || chybnaPole.length > 0 ? (
+        <p className="bg-povrch rounded-karta border-chyba text-chyba text-telo lg:text-telo-pc mt-7 border-2 px-5 py-4 font-bold">
+          {stav.zprava ??
+            `Zpráva zatím neodešla. Opravte prosím: ${chybnaPole.join(", ")}.`}
         </p>
       ) : null}
 
@@ -196,7 +211,7 @@ function Pole({
 
   const trida =
     "bg-povrch rounded-karta text-telo lg:text-telo-pc w-full px-4 py-3.5 " +
-    (chyba ? "outline outline-2 outline-text" : "");
+    (chyba ? "outline outline-2 outline-chyba" : "");
 
   return (
     <div>
@@ -241,7 +256,7 @@ function Pole({
       </div>
 
       {chyba ? (
-        <p id={idChyby} className="text-telo mt-2 font-bold">
+        <p id={idChyby} className="text-chyba text-telo mt-2 font-bold">
           {chyba}
         </p>
       ) : null}

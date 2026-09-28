@@ -47,8 +47,12 @@ overit(
   !SCHEMA_KONTAKT.safeParse({ ...platne, email: "jana@example" }).success,
 );
 overit(
-  "krátká zpráva neprojde",
-  !SCHEMA_KONTAKT.safeParse({ ...platne, zprava: "ahoj" }).success,
+  "prázdná zpráva projde — je nepovinná",
+  SCHEMA_KONTAKT.safeParse({ ...platne, zprava: "   " }).success,
+);
+overit(
+  "krátká zpráva projde",
+  SCHEMA_KONTAKT.safeParse({ ...platne, zprava: "test" }).success,
 );
 overit(
   "telefon je nepovinný",

@@ -23,6 +23,10 @@
   --color-povrch: #fbfbfa; /* pozadí liché sekce, povrch karet */
   --color-linka: #e4e5e1; /* linka uvnitř karet, sekundární tlačítko */
 
+  /* Chyba ve formuláři. Jediná „výstražná" barva webu — jen pro chyby,
+     nikdy pro výzdobu. 6,4 : 1 na ploše, 7,3 : 1 na povrchu. */
+  --color-chyba: #a3211b;
+
   /* Zápatí — tmavý podklad, jediné místo, kde je azurová barvou písma */
   --color-patka-text: #d5d6d2;
   --color-patka-nadpis: #a9aba6;

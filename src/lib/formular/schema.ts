@@ -40,8 +40,15 @@ export const SCHEMA_KONTAKT = z.object({
   zprava: z
     .string()
     .trim()
-    .min(5, "Napište prosím pár slov, s čím vám můžu pomoct.")
-    .max(2000, "Zpráva je moc dlouhá. Zkuste ji zkrátit."),
+    .max(2000, "Zpráva je moc dlouhá. Zkuste ji zkrátit.")
+    /*
+      Nepovinná. Kdo chce jen nechat telefon, ať nemusí nic vymýšlet.
+      Dřív tu bylo minimum 5 znaků a „test" neprošel — člověk pak viděl
+      jen to, že formulář problikl. Proti robotům je past a omezení
+      frekvence, ne délka zprávy.
+    */
+    .optional()
+    .default(""),
 
   /*
     Past na roboty.

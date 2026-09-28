@@ -117,7 +117,7 @@ export async function posliZpravu(
       data.telefon ? `Telefon: ${data.telefon}` : "Telefon: neuveden",
       "",
       "Zpráva:",
-      data.zprava,
+      data.zprava || "(bez textu — ozvěte se prosím zpátky)",
       "",
       "---",
       "Odesláno z kontaktního formuláře na fyzioterapiekokesova.cz.",
@@ -137,10 +137,9 @@ export async function posliPotvrzeni(data: DataKontakt) {
       "děkuju za zprávu. Přečtu si ji a ozvu se vám, jakmile to půjde.",
       "Pokud to spěchá, zavolejte mi prosím rovnou.",
       "",
-      "Pro pořádek posílám, co jste napsali:",
-      "",
-      data.zprava,
-      "",
+      ...(data.zprava
+        ? ["Pro pořádek posílám, co jste napsali:", "", data.zprava, ""]
+        : []),
       "Michaela Kokešová",
       "fyzioterapie · podologie · České Budějovice",
       "",
