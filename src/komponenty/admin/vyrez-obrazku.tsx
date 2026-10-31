@@ -37,7 +37,7 @@ const KROK = 2;
  * a rozměrům ze zadání. Kde se rozměr na mobilu a na počítači liší, bere se
  * ten počítačový — na užším rámečku se ořízne víc, ne míň.
  */
-const POMERY: Record<string, string> = {
+export const POMERY: Record<string, string> = {
   hero: "5 / 7",
   portret: "4 / 5",
   galerie: "4 / 3",

@@ -116,8 +116,7 @@ export default async function Uvod() {
         formular={<FormularKontakt />}
         mapa={
           <Mapa
-            lat={textNeboNic(o.kontakt, "mapa_lat")}
-            lon={textNeboNic(o.kontakt, "mapa_lon")}
+            hledat={textNeboNic(o.kontakt, "mapa_hledat")}
             adresa={textNeboNic(o.kontakt, "adresa")}
           />
         }

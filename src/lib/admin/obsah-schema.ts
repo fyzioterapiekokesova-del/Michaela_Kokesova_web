@@ -25,6 +25,19 @@ type Zaklad = {
   /** Věta pod polem, když je potřeba něco vysvětlit. */
   napoveda?: string;
   povinne?: boolean;
+  /**
+   * Nadpis bloku, do kterého pole patří. Sousední pole se stejnou skupinou
+   * se ve formuláři vykreslí v jednom rámečku — dlouhá sekce se tak čte
+   * po kouscích, ne jako jeden nekonečný sloupec.
+   */
+  skupina?: string;
+  /** Krátké pole na počítači do půlky šířky, vedle dalšího krátkého. */
+  sirka?: "pul";
+  /**
+   * Technické nastavení, na které se sahá jednou za čas. Schová se do
+   * sbaleného bloku „Další nastavení" na konci sekce.
+   */
+  dalsi?: boolean;
 };
 
 export type Moznost = { hodnota: string; popisek: string };
@@ -62,6 +75,14 @@ export type Pole =
       polozka: readonly Pole[];
       min?: number;
       max?: number;
+      /**
+       * Jak se položky vykreslí:
+       * - `rozbalene` — všechna pole pod sebou (výchozí),
+       * - `sbalene` — každá položka jako řádek s nadpisem, rozbalí se kliknutím,
+       * - `tabulka` — krátká pole vedle sebe na jednom řádku (ceník, vzdělání),
+       * - `mrizka` — položky ve dvou sloupcích (fotky).
+       */
+      zobrazeni?: "rozbalene" | "sbalene" | "tabulka" | "mrizka";
     });
 
 export type Sekce = {
@@ -72,6 +93,11 @@ export type Sekce = {
   popis?: string;
   /** Které adresy se po uložení mají obnovit. */
   obnovit: readonly string[];
+  /**
+   * Kam vede odkaz „Zobrazit na webu". Když chybí, bere se první adresa
+   * z `obnovit`.
+   */
+  naWebu?: string;
   pole: readonly Pole[];
 };
 
@@ -98,6 +124,7 @@ function obrazek(
       popisek,
       varianta,
       napoveda,
+      skupina: popisek,
       popisPole: `${jmeno}_popis`,
       poziceJmeno: `${jmeno}_pozice`,
       zoomJmeno: `${jmeno}_zoom`,
@@ -106,6 +133,7 @@ function obrazek(
       druh: "text",
       jmeno: `${jmeno}_popis`,
       popisek: `Popisek fotky „${popisek}“`,
+      skupina: popisek,
       napoveda:
         "Popište jednou větou, co na fotce je. Přečte ho člověk, který fotku nevidí.",
       max: 160,
@@ -118,6 +146,7 @@ const SEKCE_PODSLUZEB: Pole = {
   jmeno: "casti",
   popisek: "Jednotlivé úkony",
   nazevPolozky: "úkon",
+  zobrazeni: "sbalene",
   napoveda: "Rozdělí stránku na části. Každá část dostane vlastní mezinadpis.",
   polozka: [
     { druh: "text", jmeno: "nadpis", popisek: "Název úkonu", povinne: true, max: 80 },
@@ -142,21 +171,23 @@ export const SCHEMA: readonly Sekce[] = [
     popis: "První, co člověk uvidí. Telefon je hlavní akce celého webu.",
     obnovit: ["/"],
     pole: [
-      { druh: "text", jmeno: "stitek", popisek: "Štítek nad nadpisem", max: 60 },
+      { druh: "text", jmeno: "stitek", popisek: "Štítek nad nadpisem", skupina: "Texty", max: 60 },
       {
         druh: "text",
         jmeno: "nadpis",
         popisek: "Hlavní nadpis",
+        skupina: "Texty",
         napoveda:
           "Měl by obsahovat obor i město — podle toho vás lidé hledají ve vyhledávači.",
         povinne: true,
         max: 90,
       },
-      { druh: "viceradkovy", jmeno: "perex", popisek: "Úvodní odstavec", radky: 3 },
+      { druh: "viceradkovy", jmeno: "perex", popisek: "Úvodní odstavec", skupina: "Texty", radky: 3 },
       {
         druh: "text",
         jmeno: "poznamka",
         popisek: "Uklidňující věta",
+        skupina: "Texty",
         napoveda: "Například: Objednat se můžete i bez doporučení lékaře.",
         max: 120,
       },
@@ -164,15 +195,25 @@ export const SCHEMA: readonly Sekce[] = [
         druh: "text",
         jmeno: "tlacitko_1",
         popisek: "Popisek hlavního tlačítka",
+        skupina: "Tlačítka",
+        sirka: "pul",
         napoveda: "Tlačítko vede na váš telefon. Nemusíte do něj psát číslo.",
         povinne: true,
         max: 40,
       },
-      { druh: "text", jmeno: "tlacitko_2", popisek: "Popisek vedlejšího tlačítka", max: 40 },
+      {
+        druh: "text",
+        jmeno: "tlacitko_2",
+        popisek: "Popisek vedlejšího tlačítka",
+        skupina: "Tlačítka",
+        sirka: "pul",
+        max: 40,
+      },
       {
         druh: "vyber",
         jmeno: "rozvrzeni",
         popisek: "Rozvržení",
+        dalsi: true,
         napoveda:
           "Dokud nemáte fotku, přepněte na jeden sloupec — text se pak roztáhne přes celou šířku.",
         vychozi: "jeden-sloupec",
@@ -185,6 +226,7 @@ export const SCHEMA: readonly Sekce[] = [
         druh: "vyber",
         jmeno: "vyplneni",
         popisek: "Jak se má obrázek zobrazit",
+        dalsi: true,
         napoveda:
           "Fotku je lepší ořezat do plochy. Logo nebo kresbu nechte zobrazit celou — ořez by jí usekl kraje a kolem plochy by byl vidět rámeček.",
         vychozi: "orez",
@@ -209,6 +251,7 @@ export const SCHEMA: readonly Sekce[] = [
         jmeno: "polozky",
         popisek: "Potíže",
         nazevPolozky: "potíž",
+        zobrazeni: "tabulka",
         max: 11,
         polozka: [
           { druh: "text", jmeno: "text", popisek: "Co člověka trápí", povinne: true, max: 60 },
@@ -219,6 +262,7 @@ export const SCHEMA: readonly Sekce[] = [
         druh: "text",
         jmeno: "telefon_text",
         popisek: "Poslední položka — odkaz na telefon",
+        skupina: "Poslední položka",
         napoveda: "Je pro toho, kdo si ze seznamu nevybral. Vede na váš telefon.",
         povinne: true,
         max: 60,
@@ -236,6 +280,7 @@ export const SCHEMA: readonly Sekce[] = [
         jmeno: "kroky",
         popisek: "Kroky",
         nazevPolozky: "krok",
+        zobrazeni: "sbalene",
         min: 2,
         max: 5,
         polozka: [
@@ -256,6 +301,7 @@ export const SCHEMA: readonly Sekce[] = [
         jmeno: "karty",
         popisek: "Věkové skupiny",
         nazevPolozky: "skupinu",
+        zobrazeni: "tabulka",
         max: 8,
         polozka: [
           { druh: "text", jmeno: "nadpis", popisek: "Skupina", povinne: true, max: 40 },
@@ -270,16 +316,24 @@ export const SCHEMA: readonly Sekce[] = [
     nazev: "O Michaele — blok na úvodu",
     obnovit: ["/"],
     pole: [
-      { druh: "text", jmeno: "jmeno", popisek: "Jméno", povinne: true, max: 60 },
+      { druh: "text", jmeno: "jmeno", popisek: "Jméno", skupina: "Texty", povinne: true, max: 60 },
       {
         druh: "text",
         jmeno: "claim",
         popisek: "Věta o tom, jak pracujete",
+        skupina: "Texty",
         napoveda:
           "Popisujte přístup, ne výsledek. Nic, co by znělo jako slib vyléčení.",
         max: 90,
       },
-      { druh: "text", jmeno: "tlacitko", popisek: "Popisek tlačítka", povinne: true, max: 40 },
+      {
+        druh: "text",
+        jmeno: "tlacitko",
+        popisek: "Popisek tlačítka",
+        skupina: "Texty",
+        povinne: true,
+        max: 40,
+      },
       ...obrazek("portret", "Portrét", "portret"),
     ],
   },
@@ -295,16 +349,18 @@ export const SCHEMA: readonly Sekce[] = [
         druh: "prepinac",
         jmeno: "zobrazit",
         popisek: "Zobrazit sekci na webu",
+        skupina: "Sekce na webu",
         vychozi: false,
         napoveda:
           "Vypnuto znamená, že sekce na webu není. Prázdná šedá místa se návštěvníkům nikdy neukazují.",
       },
-      { druh: "text", jmeno: "nadpis", popisek: "Nadpis sekce", max: 60 },
+      { druh: "text", jmeno: "nadpis", popisek: "Nadpis sekce", skupina: "Sekce na webu", max: 60 },
       {
         druh: "seznam",
         jmeno: "fotky",
         popisek: "Fotky",
         nazevPolozky: "fotku",
+        zobrazeni: "mrizka",
         max: 4,
         napoveda: "Zobrazí se přesně tolik fotek, kolik jich nahrajete.",
         polozka: [
@@ -333,21 +389,32 @@ export const SCHEMA: readonly Sekce[] = [
     nazev: "Kontakt",
     popis: "Co nevyplníte, to se na webu neobjeví. Žádný prázdný řádek nevznikne.",
     obnovit: ["/"],
+    naWebu: "/#kontakt",
     pole: [
       {
         druh: "text",
         jmeno: "telefon",
         popisek: "Telefon",
-        napoveda: "Hlavní akce celého webu. Piště jen číslo, mezery si doplní web sám.",
+        napoveda: "Hlavní akce celého webu. Pište jen číslo, mezery si doplní web sám.",
+        skupina: "Telefon a e-mail",
+        sirka: "pul",
         povinne: true,
         max: 20,
       },
-      { druh: "text", jmeno: "email", popisek: "E-mail", max: 120 },
+      {
+        druh: "text",
+        jmeno: "email",
+        popisek: "E-mail",
+        skupina: "Telefon a e-mail",
+        sirka: "pul",
+        max: 120,
+      },
       {
         druh: "viceradkovy",
         jmeno: "adresa",
         popisek: "Adresa ordinace",
         napoveda: "Včetně patra nebo čísla dveří. Pro člověka s bolavou nohou je to důležité.",
+        skupina: "Adresa a otevírací doba",
         radky: 3,
       },
       {
@@ -355,25 +422,42 @@ export const SCHEMA: readonly Sekce[] = [
         jmeno: "otviraci_doba",
         popisek: "Otevírací doba",
         napoveda: "Každý den na vlastní řádek.",
+        skupina: "Adresa a otevírací doba",
         radky: 7,
       },
-      { druh: "text", jmeno: "ico", popisek: "IČO", povinne: true, max: 12 },
-      { druh: "text", jmeno: "instagram", popisek: "Odkaz na Instagram", max: 200 },
-      { druh: "text", jmeno: "facebook", popisek: "Odkaz na Facebook", max: 200 },
       {
         druh: "text",
-        jmeno: "mapa_lat",
-        popisek: "Mapa — zeměpisná šířka",
-        napoveda: "Bez souřadnic se na webu mapa vůbec nenabídne.",
-        max: 20,
+        jmeno: "mapa_hledat",
+        popisek: "Adresa pro mapu",
+        napoveda:
+          "Napište ji tak, jak byste ji zadali do Google Map, například „Lannova 12, České Budějovice“. Když pole necháte prázdné, mapa se na webu nezobrazí.",
+        skupina: "Adresa a otevírací doba",
+        max: 200,
       },
-      { druh: "text", jmeno: "mapa_lon", popisek: "Mapa — zeměpisná délka", max: 20 },
+      {
+        druh: "text",
+        jmeno: "instagram",
+        popisek: "Odkaz na Instagram",
+        skupina: "Sociální sítě",
+        sirka: "pul",
+        max: 200,
+      },
+      {
+        druh: "text",
+        jmeno: "facebook",
+        popisek: "Odkaz na Facebook",
+        skupina: "Sociální sítě",
+        sirka: "pul",
+        max: 200,
+      },
+      { druh: "text", jmeno: "ico", popisek: "IČO", dalsi: true, povinne: true, max: 12 },
       {
         druh: "text",
         jmeno: "prijemce",
         popisek: "Kam chodí zprávy z formuláře",
         napoveda:
           "E-mailová adresa. Návštěvníkům se nikde nezobrazí. Chcete-li zprávy na víc adres, oddělte je čárkou.",
+        dalsi: true,
         povinne: true,
         max: 120,
       },
@@ -385,8 +469,14 @@ export const SCHEMA: readonly Sekce[] = [
     nazev: "Služba — Fyzioterapie",
     obnovit: ["/fyzioterapie"],
     pole: [
-      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", povinne: true, max: 90 },
-      { druh: "viceradkovy", jmeno: "perex", popisek: "Úvodní odstavec", radky: 4 },
+      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", povinne: true, max: 90 },
+      {
+        druh: "viceradkovy",
+        jmeno: "perex",
+        popisek: "Úvodní odstavec",
+        skupina: "Úvod stránky",
+        radky: 4,
+      },
       SEKCE_PODSLUZEB,
       ...obrazek("fotka", "Fotka", "galerie"),
     ],
@@ -399,8 +489,14 @@ export const SCHEMA: readonly Sekce[] = [
       "Nejdůležitější stránka webu z hlediska vyhledávání. V Budějovicích podologii skoro nikdo nedělá.",
     obnovit: ["/podologie"],
     pole: [
-      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", povinne: true, max: 90 },
-      { druh: "viceradkovy", jmeno: "perex", popisek: "Úvodní odstavec", radky: 4 },
+      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", povinne: true, max: 90 },
+      {
+        druh: "viceradkovy",
+        jmeno: "perex",
+        popisek: "Úvodní odstavec",
+        skupina: "Úvod stránky",
+        radky: 4,
+      },
       SEKCE_PODSLUZEB,
       ...obrazek("fotka", "Fotka", "galerie"),
     ],
@@ -411,8 +507,14 @@ export const SCHEMA: readonly Sekce[] = [
     nazev: "Služba — Dětská fyzioterapie",
     obnovit: ["/detska-fyzioterapie"],
     pole: [
-      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", povinne: true, max: 90 },
-      { druh: "viceradkovy", jmeno: "perex", popisek: "Úvodní odstavec", radky: 4 },
+      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", povinne: true, max: 90 },
+      {
+        druh: "viceradkovy",
+        jmeno: "perex",
+        popisek: "Úvodní odstavec",
+        skupina: "Úvod stránky",
+        radky: 4,
+      },
       SEKCE_PODSLUZEB,
       ...obrazek("fotka", "Fotka", "galerie"),
     ],
@@ -425,8 +527,14 @@ export const SCHEMA: readonly Sekce[] = [
       "Co hradí pojišťovna a co si klient platí sám, napište do poznámky u položky.",
     obnovit: ["/cenik"],
     pole: [
-      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", povinne: true, max: 90 },
-      { druh: "viceradkovy", jmeno: "perex", popisek: "Úvodní odstavec", radky: 3 },
+      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", povinne: true, max: 90 },
+      {
+        druh: "viceradkovy",
+        jmeno: "perex",
+        popisek: "Úvodní odstavec",
+        skupina: "Úvod stránky",
+        radky: 3,
+      },
       {
         druh: "seznam",
         jmeno: "oblasti",
@@ -439,14 +547,16 @@ export const SCHEMA: readonly Sekce[] = [
             jmeno: "polozky",
             popisek: "Položky",
             nazevPolozky: "položku",
+            zobrazeni: "tabulka",
             polozka: [
               { druh: "text", jmeno: "nazev", popisek: "Úkon", povinne: true, max: 90 },
-              { druh: "text", jmeno: "delka", popisek: "Délka", max: 30 },
+              { druh: "text", jmeno: "delka", popisek: "Délka", sirka: "pul", max: 30 },
               {
                 druh: "text",
                 jmeno: "cena",
                 popisek: "Cena",
                 napoveda: "Můžete napsat i „na dotaz“.",
+                sirka: "pul",
                 max: 40,
               },
               {
@@ -469,11 +579,12 @@ export const SCHEMA: readonly Sekce[] = [
     nazev: "O mně",
     obnovit: ["/o-mne"],
     pole: [
-      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", povinne: true, max: 90 },
+      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Text", povinne: true, max: 90 },
       {
         druh: "viceradkovy",
         jmeno: "text",
         popisek: "Text o vás",
+        skupina: "Text",
         napoveda: "Pište v první osobě. Je to váš web, ne leták.",
         radky: 12,
       },
@@ -483,8 +594,9 @@ export const SCHEMA: readonly Sekce[] = [
         jmeno: "vzdelani",
         popisek: "Vzdělání a kurzy",
         nazevPolozky: "kurz",
+        zobrazeni: "tabulka",
         polozka: [
-          { druh: "text", jmeno: "rok", popisek: "Rok", povinne: true, max: 9 },
+          { druh: "text", jmeno: "rok", popisek: "Rok", sirka: "pul", povinne: true, max: 9 },
           { druh: "text", jmeno: "nazev", popisek: "Název", povinne: true, max: 140 },
           { druh: "text", jmeno: "poradatel", popisek: "Pořadatel", max: 140 },
         ],
@@ -493,6 +605,7 @@ export const SCHEMA: readonly Sekce[] = [
         druh: "prepinac",
         jmeno: "galerie_zobrazit",
         popisek: "Zobrazit galerii na webu",
+        skupina: "Galerie",
         vychozi: false,
         napoveda:
           "Vypnuto znamená, že galerie na webu není. Zapněte ji, až budete mít fotky.",
@@ -500,8 +613,10 @@ export const SCHEMA: readonly Sekce[] = [
       {
         druh: "seznam",
         jmeno: "galerie",
-        popisek: "Galerie",
+        popisek: "Fotky v galerii",
         nazevPolozky: "fotku",
+        skupina: "Galerie",
+        zobrazeni: "mrizka",
         max: 12,
         polozka: [
           {
@@ -526,13 +641,20 @@ export const SCHEMA: readonly Sekce[] = [
       "Pořadí měníte šipkami. Nahoru patří to, na co se lidé ptají nejčastěji.",
     obnovit: ["/caste-dotazy", "/"],
     pole: [
-      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", povinne: true, max: 90 },
-      { druh: "viceradkovy", jmeno: "perex", popisek: "Úvodní odstavec", radky: 3 },
+      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", povinne: true, max: 90 },
+      {
+        druh: "viceradkovy",
+        jmeno: "perex",
+        popisek: "Úvodní odstavec",
+        skupina: "Úvod stránky",
+        radky: 3,
+      },
       {
         druh: "seznam",
         jmeno: "otazky",
         popisek: "Otázky",
         nazevPolozky: "otázku",
+        zobrazeni: "sbalene",
         polozka: [
           { druh: "text", jmeno: "otazka", popisek: "Otázka", povinne: true, max: 140 },
           { druh: "viceradkovy", jmeno: "odpoved", popisek: "Odpověď", povinne: true, radky: 5 },
@@ -561,6 +683,7 @@ export const SCHEMA: readonly Sekce[] = [
         jmeno: "stranky",
         popisek: "Stránky",
         nazevPolozky: "stránku",
+        zobrazeni: "sbalene",
         polozka: [
           {
             druh: "vyber",
@@ -599,7 +722,8 @@ export const SCHEMA: readonly Sekce[] = [
   {
     klic: "pravni",
     nazev: "Právní dokumenty",
-    popis: "Tyhle texty měňte jen po domluvě — mají právní následky.",
+    popis:
+      "Texty zásad spravujete sami a odpovídáte za jejich obsah. Každý odstavec oddělte prázdným řádkem.",
     obnovit: ["/zasady-osobnich-udaju", "/zasady-cookies"],
     pole: [
       {

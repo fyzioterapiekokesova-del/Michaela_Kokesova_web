@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { vyzadujAdmina } from "@/lib/admin/autorizace";
 import { odhlasit } from "@/app/admin/akce/prihlaseni";
+import { adresaWebu } from "@/lib/admin/adresa-webu";
 
 /**
  * Layout přihlášené části administrace.
@@ -35,15 +36,15 @@ export default async function ChranenyLayout({
               `rel="noopener"` proto, že otevřená karta jinak dosáhne přes
               `window.opener` zpátky na administraci.
             */}
-            <Link
-              href="/"
+            <a
+              href={adresaWebu()}
               target="_blank"
               rel="noopener"
               className="klik text-[1.0625rem] underline"
             >
               Zobrazit web
               <span className="sr-only"> (otevře se v nové kartě)</span>
-            </Link>
+            </a>
             <form action={odhlasit}>
               <button type="submit" className="klik text-[1.0625rem] underline">
                 Odhlásit se

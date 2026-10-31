@@ -3,9 +3,10 @@
 import Image from "next/image";
 import { useId, useState, useTransition, type ReactNode } from "react";
 import { nahrajFotku } from "@/app/admin/akce/fotky";
-import { VyrezObrazku } from "@/komponenty/admin/vyrez-obrazku";
+import { POMERY, VyrezObrazku } from "@/komponenty/admin/vyrez-obrazku";
 import type { Pole } from "@/lib/admin/obsah-schema";
 import { CILE_ODKAZU } from "@/lib/navigace";
+import { stylVyrezu } from "@/lib/obrazky/pozice";
 import { adresaFotky } from "@/lib/supabase/nastaveni";
 
 /**
@@ -15,7 +16,9 @@ import { adresaFotky } from "@/lib/supabase/nastaveni";
  * přidat řádek do `obsah-schema.ts`, ne psát nový formulář.
  *
  * Popisek je vždycky **nad polem**, ne jen jako zástupný text: zástupný text
- * při psaní zmizí a člověk pak neví, co do pole píše.
+ * při psaní zmizí a člověk pak neví, co do pole píše. Výjimkou je tabulka
+ * (ceník, vzdělání) na počítači — tam popisek nese záhlaví sloupce a u pole
+ * zůstává jen pro odečítač.
  */
 
 export type Hodnoty = Record<string, unknown>;
@@ -29,13 +32,17 @@ type Vlastnosti = {
   /** Klíč sekce. Server podle něj pojmenuje složku s fotkou. */
   klicSekce: string;
   zmen: (jmeno: string, hodnota: unknown) => void;
+  /** Pole v řádku tabulky: bez odsazení, popisek na počítači jen pro odečítač. */
+  kompaktni?: boolean;
+  /** U fotky: pole s jejím popiskem. Vykreslí se přímo pod fotkou. */
+  popisFotky?: Pole;
 };
 
 const VSTUP =
   "border-linka bg-povrch rounded-polozka w-full border px-4 py-3 " +
   "text-[1.0625rem] focus:border-text";
 
-const VSTUP_CHYBA = "border-text border-2";
+const VSTUP_CHYBA = "border-chyba border-2";
 
 function retezec(hodnoty: Hodnoty, jmeno: string, vychozi = ""): string {
   const h = hodnoty[jmeno];
@@ -56,6 +63,7 @@ function Obal({
   idNapovedy,
   idChyby,
   chyba,
+  kompaktni,
   children,
 }: {
   id: string;
@@ -63,24 +71,31 @@ function Obal({
   idNapovedy?: string;
   idChyby?: string;
   chyba?: string;
+  kompaktni?: boolean;
   children: ReactNode;
 }) {
   return (
-    <div className="mt-6">
-      <label htmlFor={id} className="block font-bold">
+    <div className={kompaktni ? "" : "mt-6"}>
+      <label
+        htmlFor={id}
+        className={`block font-bold ${kompaktni ? "lg:sr-only" : ""}`}
+      >
         {pole.popisek}
         {pole.povinne ? (
           <span className="text-text-doplnek font-normal"> — vyplňte</span>
         ) : null}
       </label>
       {pole.napoveda ? (
-        <p id={idNapovedy} className="text-text-doplnek mt-1 text-[1.0625rem]">
+        <p
+          id={idNapovedy}
+          className={`text-text-doplnek mt-1 text-[1.0625rem] ${kompaktni ? "lg:sr-only" : ""}`}
+        >
           {pole.napoveda}
         </p>
       ) : null}
-      <div className="mt-2">{children}</div>
+      <div className={kompaktni ? "mt-1 lg:mt-0" : "mt-2"}>{children}</div>
       {chyba ? (
-        <p id={idChyby} className="mt-2 font-bold">
+        <p id={idChyby} data-chyba className="text-chyba mt-2 font-bold">
           {chyba}
         </p>
       ) : null}
@@ -88,12 +103,14 @@ function Obal({
   );
 }
 
+/**
+ * Počítadlo znaků. Ukáže se až blízko limitu — pod každým polem pořád by
+ * jen přidávalo čísla, která nikoho nezajímají.
+ */
 function Pocitadlo({ delka, max }: { delka: number; max: number }) {
-  const tesne = delka > max * 0.9;
+  if (delka < max * 0.8) return null;
   return (
-    <p
-      className={`mt-1 text-[1.0625rem] ${tesne ? "font-bold" : "text-text-doplnek"}`}
-    >
+    <p className="mt-1 text-[1.0625rem] font-bold">
       {delka} z {max} znaků
     </p>
   );
@@ -106,13 +123,15 @@ export function PoleFormulare({
   chyby,
   klicSekce,
   zmen,
+  kompaktni,
+  popisFotky,
 }: Vlastnosti) {
   const id = useId();
   const chyba = chyby[cesta];
   const idNapovedy = pole.napoveda ? `${id}-napoveda` : undefined;
   const idChyby = chyba ? `${id}-chyba` : undefined;
   const popis = [idNapovedy, idChyby].filter(Boolean).join(" ") || undefined;
-  const spolecne = { id, pole, idNapovedy, idChyby, chyba };
+  const spolecne = { id, pole, idNapovedy, idChyby, chyba, kompaktni };
 
   switch (pole.druh) {
     case "text": {
@@ -228,7 +247,11 @@ export function PoleFormulare({
       );
     }
 
-    case "obrazek":
+    case "obrazek": {
+      // Popisek fotky má vlastní cestu vedle fotky, ne pod ní.
+      const cestaPopisu = popisFotky
+        ? cesta.replace(/[^.]+$/, popisFotky.jmeno)
+        : undefined;
       return (
         <PoleObrazku
           pole={pole}
@@ -236,8 +259,21 @@ export function PoleFormulare({
           klicSekce={klicSekce}
           chyba={chyba}
           zmen={zmen}
+          popisek={
+            popisFotky && cestaPopisu ? (
+              <PoleFormulare
+                pole={popisFotky}
+                hodnoty={hodnoty}
+                cesta={cestaPopisu}
+                chyby={chyby}
+                klicSekce={klicSekce}
+                zmen={zmen}
+              />
+            ) : null
+          }
         />
       );
+    }
 
     case "seznam":
       // Seznamy vykresluje `SeznamPolozek` — potřebuje vlastní rámeček
@@ -250,24 +286,36 @@ export function PoleFormulare({
 /*  Fotka                                                                      */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Fotka jako jedna karta: náhled, vedle něj tlačítka, pod tím popisek.
+ *
+ * Náhled je ve stejném poměru stran a se stejným výřezem jako na webu —
+ * je na první pohled vidět, co z fotky návštěvník uvidí. Ovládání výřezu
+ * se rozbalí až na požádání; většinou na něj není potřeba sahat.
+ */
 function PoleObrazku({
   pole,
   hodnoty,
   klicSekce,
   chyba,
   zmen,
+  popisek,
 }: {
   pole: Extract<Pole, { druh: "obrazek" }>;
   hodnoty: Hodnoty;
   klicSekce: string;
   chyba?: string;
   zmen: (jmeno: string, hodnota: unknown) => void;
+  /** Pole s popiskem fotky. Ukáže se, jen když je fotka nahraná. */
+  popisek: ReactNode;
 }) {
   const id = useId();
   const [chybaNahrani, setChybaNahrani] = useState<string>();
   const [nahrava, zacniNahravat] = useTransition();
+  const [upravujeVyrez, setUpravujeVyrez] = useState(false);
 
   const cesta = retezec(hodnoty, pole.jmeno);
+  const pomer = POMERY[pole.varianta] ?? "4 / 3";
 
   function posliNaServer(soubor: File) {
     setChybaNahrani(undefined);
@@ -289,34 +337,107 @@ function PoleObrazku({
   }
 
   return (
-    <div className="border-linka rounded-karta mt-6 border p-4">
-      <p className="font-bold">{pole.popisek}</p>
+    <div role="group" aria-label={pole.popisek} className="mt-6">
       {pole.napoveda ? (
-        <p className="text-text-doplnek mt-1 text-[1.0625rem]">{pole.napoveda}</p>
+        <p className="text-text-doplnek text-[1.0625rem]">{pole.napoveda}</p>
       ) : null}
 
-      {cesta ? (
-        <div className="mt-3 flex flex-wrap items-center gap-4">
-          <div className="bg-seda rounded-polozka relative h-24 w-24 shrink-0 overflow-hidden">
+      <div className="mt-3 flex flex-wrap items-start gap-5">
+        <div
+          className={`bg-seda rounded-polozka relative shrink-0 overflow-hidden ${
+            pole.varianta === "sdileni" ? "w-64" : "w-44"
+          }`}
+          style={{ aspectRatio: pomer }}
+        >
+          {cesta ? (
             <Image
               src={adresaFotky(cesta)}
               alt=""
               fill
-              sizes="96px"
+              sizes="256px"
               className="object-cover"
+              style={stylVyrezu(hodnoty[pole.poziceJmeno], hodnoty[pole.zoomJmeno])}
             />
-          </div>
-          <button
-            type="button"
-            onClick={() => zmen(pole.jmeno, "")}
-            className="klik rounded-tlacitko bg-linka hover:bg-seda px-5 text-[1.0625rem] font-bold transition-colors duration-150"
-          >
-            Odebrat fotku
-          </button>
+          ) : (
+            <span className="text-text-doplnek absolute inset-0 flex items-center justify-center p-3 text-center text-[1.0625rem]">
+              Zatím bez fotky
+            </span>
+          )}
         </div>
+
+        <div className="flex flex-col items-start gap-2">
+          {/*
+            Systémové pole pro výběr souboru je drobné a snadno se přehlédne.
+            Vstup proto zůstává, ale schovaný, a klikacím prvkem je jeho
+            popisek vysázený jako tlačítko. Ohnisko se kreslí na tlačítko
+            přes `focus-within`, jinak by nebylo vidět.
+          */}
+          <label
+            htmlFor={id}
+            className="klik rounded-tlacitko bg-azurova text-text hover:bg-text hover:text-azurova cursor-pointer px-6 font-bold transition-colors duration-150 focus-within:outline-3 focus-within:outline-offset-3 focus-within:outline-current"
+          >
+            {nahrava ? "Nahrává se…" : cesta ? "Nahrát jinou fotku" : "Nahrát fotku"}
+            <input
+              id={id}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              disabled={nahrava}
+              onChange={(e) => {
+                const soubor = e.target.files?.[0];
+                if (soubor) posliNaServer(soubor);
+                // Vyprázdnit, ať jde nahrát stejný soubor znovu po chybě.
+                e.target.value = "";
+              }}
+              className="sr-only"
+            />
+          </label>
+          <p className="text-text-doplnek text-[1.0625rem]">
+            JPG, PNG nebo WEBP, nejvýš 5 MB.
+          </p>
+
+          {cesta ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setUpravujeVyrez((v) => !v)}
+                aria-expanded={upravujeVyrez}
+                className="klik rounded-tlacitko bg-linka hover:bg-seda px-5 text-[1.0625rem] font-bold transition-colors duration-150"
+              >
+                {upravujeVyrez ? "Hotovo s výřezem" : "Upravit výřez"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      "Odebrat fotku? Z webu zmizí, až sekci uložíte.",
+                    )
+                  ) {
+                    setUpravujeVyrez(false);
+                    zmen(pole.jmeno, "");
+                  }
+                }}
+                className="klik text-[1.0625rem] underline"
+              >
+                Odebrat fotku
+              </button>
+            </>
+          ) : null}
+        </div>
+      </div>
+
+      {chybaNahrani ? (
+        <p data-chyba className="text-chyba mt-3 font-bold">
+          {chybaNahrani}
+        </p>
+      ) : null}
+      {chyba ? (
+        <p data-chyba className="text-chyba mt-3 font-bold">
+          {chyba}
+        </p>
       ) : null}
 
-      {cesta ? (
+      {cesta && upravujeVyrez ? (
         <VyrezObrazku
           src={adresaFotky(cesta)}
           varianta={pole.varianta}
@@ -326,50 +447,9 @@ function PoleObrazku({
           poziceJmeno={pole.poziceJmeno}
           zoomJmeno={pole.zoomJmeno}
         />
-      ) : (
-        <p className="text-text-doplnek mt-3 text-[1.0625rem]">
-          Zatím tu žádná fotka není. Dokud ji nenahrajete, na webu se místo po
-          ní nezobrazí — prázdná šedá plocha nikde nevznikne.
-        </p>
-      )}
+      ) : null}
 
-      {/*
-        Systémové pole pro výběr souboru je drobné a snadno se přehlédne —
-        vypadá jako „Choose File" kdesi v textu. Vstup proto zůstává, ale
-        schovaný, a klikacím prvkem je jeho popisek vysázený jako tlačítko.
-        Vstup je pořád v pořadí tabulátoru a čtečka ho přečte; ohnisko se
-        kreslí na tlačítko přes `focus-within`, jinak by nebylo vidět.
-      */}
-      <div className="mt-4">
-        <p className="font-bold">
-          {cesta ? "Nahradit jinou fotkou" : "Nahrát fotku"}
-        </p>
-        <p className="text-text-doplnek mt-1 text-[1.0625rem]">
-          JPG, PNG nebo WEBP, nejvýš 5 MB.
-        </p>
-        <label
-          htmlFor={id}
-          className="klik rounded-tlacitko bg-azurova text-text hover:bg-text hover:text-azurova mt-2 cursor-pointer px-6 font-bold transition-colors duration-150 focus-within:outline-3 focus-within:outline-offset-3 focus-within:outline-current"
-        >
-          {nahrava ? "Nahrává se…" : "Vybrat fotku z počítače"}
-          <input
-            id={id}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            disabled={nahrava}
-            onChange={(e) => {
-              const soubor = e.target.files?.[0];
-              if (soubor) posliNaServer(soubor);
-              // Vyprázdnit, ať jde nahrát stejný soubor znovu po chybě.
-              e.target.value = "";
-            }}
-            className="sr-only"
-          />
-        </label>
-        {nahrava ? <p className="mt-2 font-bold">Nahrává se…</p> : null}
-        {chybaNahrani ? <p className="mt-2 font-bold">{chybaNahrani}</p> : null}
-        {chyba ? <p className="mt-2 font-bold">{chyba}</p> : null}
-      </div>
+      {cesta ? popisek : null}
     </div>
   );
 }

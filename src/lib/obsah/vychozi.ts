@@ -104,8 +104,7 @@ export const VYCHOZI_OBSAH: Record<string, Obsah> = {
     ico: "19355173",
     instagram: "",
     facebook: "",
-    mapa_lat: "",
-    mapa_lon: "",
+    mapa_hledat: "",
     prijemce: "",
   },
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { ulozSekci, type StavUlozeni } from "@/app/admin/akce/obsah";
 import type { Sekce } from "@/lib/admin/obsah-schema";
 import { SadaPoli } from "./sada-poli";
@@ -16,12 +16,21 @@ import type { Hodnoty } from "./pole";
  *
  * Čtyři stavy jako u kontaktního formuláře: prázdný · chyba u konkrétního
  * pole · ukládá se (tlačítko zablokované) · uloženo.
+ *
+ * Tlačítko Uložit je v liště přilepené ke spodku okna. U dlouhé sekce
+ * (ceník, dotazy) by jinak bylo až na konci a nebylo by poznat, jestli
+ * je vůbec co ukládat.
  */
 
 type Vlastnosti = {
   sekce: Sekce;
   vychozi: Hodnoty;
+  /** Plná adresa stránky, na které se sekce zobrazuje. */
+  naWebu: string;
 };
+
+const VAROVANI_ODCHODU =
+  "Máte neuložené změny. Když odejdete, ztratí se. Opravdu odejít?";
 
 /** Chyby ze serveru přijdou s cestou k poli — tady se z nich udělá mapa. */
 function podleCesty(stav: StavUlozeni): Record<string, string> {
@@ -31,13 +40,66 @@ function podleCesty(stav: StavUlozeni): Record<string, string> {
   return mapa;
 }
 
-export function FormularSekce({ sekce, vychozi }: Vlastnosti) {
+/**
+ * Varování před odchodem s neuloženými změnami.
+ *
+ * `beforeunload` pokryje zavření karty a obnovení stránky. Odkazy uvnitř
+ * administrace ale přecházejí bez načtení stránky a ten by je nezachytil —
+ * proto ještě hlídání kliknutí na odkazy.
+ */
+function useHlidaniOdchodu(neulozeno: boolean) {
+  useEffect(() => {
+    if (!neulozeno) return;
+
+    function predZavrenim(e: BeforeUnloadEvent) {
+      e.preventDefault();
+    }
+
+    function predKliknutim(e: MouseEvent) {
+      const odkaz = (e.target as Element | null)?.closest?.("a[href]");
+      if (!(odkaz instanceof HTMLAnchorElement)) return;
+      // Nová karta rozdělanou práci neohrozí.
+      if (odkaz.target === "_blank" || odkaz.hasAttribute("download")) return;
+      if (!window.confirm(VAROVANI_ODCHODU)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+
+    window.addEventListener("beforeunload", predZavrenim);
+    document.addEventListener("click", predKliknutim, true);
+    return () => {
+      window.removeEventListener("beforeunload", predZavrenim);
+      document.removeEventListener("click", predKliknutim, true);
+    };
+  }, [neulozeno]);
+}
+
+export function FormularSekce({ sekce, vychozi, naWebu }: Vlastnosti) {
+  const [ulozene, setUlozene] = useState<Hodnoty>(vychozi);
   const [hodnoty, setHodnoty] = useState<Hodnoty>(vychozi);
   const [stav, setStav] = useState<StavUlozeni>({ stav: "prazdno" });
   const [ukladase, zacniUkladat] = useTransition();
+  // Po „Zahodit změny" se pole vykreslí znovu. Některá (výřez fotky) si
+  // drží vlastní stav a bez toho by ukazovala zahozenou hodnotu.
+  const [verze, setVerze] = useState(0);
+
+  const neulozeno = hodnoty !== ulozene;
+  useHlidaniOdchodu(neulozeno);
 
   const chyby = podleCesty(stav);
   const pocetChyb = stav.stav === "chyba" && stav.chyby ? stav.chyby.length : 0;
+
+  // Po neúspěšném uložení dojet k první chybě — u dlouhé sekce by ji
+  // jinak musela hledat.
+  useEffect(() => {
+    if (pocetChyb === 0) return;
+    const prvni = document.querySelector<HTMLElement>(
+      '[aria-invalid="true"], [data-chyba]',
+    );
+    prvni?.scrollIntoView({ block: "center" });
+    if (prvni?.matches("input, textarea, select")) prvni.focus({ preventScroll: true });
+  }, [stav, pocetChyb]);
 
   function zmen(jmeno: string, hodnota: unknown) {
     setHodnoty((puvodni) => ({ ...puvodni, [jmeno]: hodnota }));
@@ -45,9 +107,19 @@ export function FormularSekce({ sekce, vychozi }: Vlastnosti) {
     if (stav.stav === "ulozeno") setStav({ stav: "prazdno" });
   }
 
+  function zahod() {
+    setHodnoty(ulozene);
+    setStav({ stav: "prazdno" });
+    setVerze((v) => v + 1);
+  }
+
   function odesli() {
+    const odeslane = hodnoty;
     zacniUkladat(async () => {
-      setStav(await ulozSekci(sekce.klic, JSON.stringify(hodnoty)));
+      const vysledek = await ulozSekci(sekce.klic, JSON.stringify(odeslane));
+      setStav(vysledek);
+      // Když mezitím psala dál, novější hodnoty zůstanou jako neuložené.
+      if (vysledek.stav === "ulozeno") setUlozene(odeslane);
     });
   }
 
@@ -57,6 +129,7 @@ export function FormularSekce({ sekce, vychozi }: Vlastnosti) {
         e.preventDefault();
         odesli();
       }}
+      className="max-w-[60rem]"
     >
       <p>
         <Link href="/admin" className="klik underline">
@@ -64,14 +137,26 @@ export function FormularSekce({ sekce, vychozi }: Vlastnosti) {
         </Link>
       </p>
 
-      <h1 className="text-h2 lg:text-h2-pc mt-4">{sekce.nazev}</h1>
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <h1 className="text-h2 lg:text-h2-pc">{sekce.nazev}</h1>
+        <a
+          href={naWebu}
+          target="_blank"
+          rel="noopener"
+          className="klik text-[1.0625rem] font-bold underline"
+          data-akce="admin-zobrazit-na-webu"
+        >
+          Zobrazit na webu ↗
+          <span className="sr-only"> (otevře se v nové kartě)</span>
+        </a>
+      </div>
       {sekce.popis ? (
         <p className="text-perex text-text-doplnek mt-3 max-w-[60ch]">
           {sekce.popis}
         </p>
       ) : null}
 
-      <div className="bg-povrch border-linka rounded-karta mt-8 max-w-[70ch] border p-5 lg:p-7">
+      <div key={verze} className="mt-8 space-y-6">
         <SadaPoli
           pola={sekce.pole}
           hodnoty={hodnoty}
@@ -82,42 +167,52 @@ export function FormularSekce({ sekce, vychozi }: Vlastnosti) {
         />
       </div>
 
-      {/* Shrnutí nad tlačítkem. Jednotlivé hlášky jsou i u polí, ale u dlouhé
-          sekce by se na ně muselo dolistovat. */}
-      <div className="mt-6 max-w-[70ch]" aria-live="polite">
-        {stav.stav === "chyba" && stav.zprava ? (
-          <p className="font-bold">{stav.zprava}</p>
-        ) : null}
+      {/* Lišta s ukládáním, přilepená ke spodku okna, ať je vždycky po ruce. */}
+      <div className="border-linka bg-povrch sticky bottom-0 z-10 -mx-4 mt-8 border-t px-4 py-4 shadow-[0_-4px_12px_rgb(0_0_0/0.06)] sm:mx-0 sm:rounded-t-[16px] sm:border-x sm:px-6">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          <button
+            type="submit"
+            disabled={ukladase || !neulozeno}
+            data-akce="admin-ulozit"
+            className="klik rounded-tlacitko bg-azurova text-text hover:bg-text hover:text-azurova disabled:hover:bg-azurova disabled:hover:text-text justify-center px-8 text-[1.1875rem] font-extrabold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {ukladase ? "Ukládá se…" : "Uložit změny"}
+          </button>
 
-        {pocetChyb > 0 ? (
-          <p className="font-bold">
-            {pocetChyb === 1
-              ? "Jedno pole je potřeba doplnit — hláška je u něj."
-              : `${pocetChyb} pole je potřeba doplnit — hlášky jsou u nich.`}
-          </p>
-        ) : null}
+          {neulozeno && !ukladase ? (
+            <button
+              type="button"
+              onClick={zahod}
+              className="klik text-[1.0625rem] underline"
+            >
+              Zahodit změny
+            </button>
+          ) : null}
 
-        {stav.stav === "ulozeno" ? (
-          <p className="font-bold">
-            Uloženo. Na webu se to projeví hned — zkontrolovat to můžete
-            odkazem „Zobrazit web“ nahoře.
-          </p>
-        ) : null}
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-4">
-        <button
-          type="submit"
-          disabled={ukladase}
-          data-akce="admin-ulozit"
-          className="klik rounded-tlacitko bg-azurova text-text hover:bg-text hover:text-azurova justify-center px-10 py-5 text-[1.3125rem] font-extrabold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {ukladase ? "Ukládá se…" : "Uložit"}
-        </button>
-
-        <p className="text-text-doplnek text-[1.0625rem]">
-          Uloží se jen tahle sekce.
-        </p>
+          <div aria-live="polite" className="text-[1.0625rem]">
+            {stav.stav === "chyba" && stav.zprava ? (
+              <p className="text-chyba font-bold">{stav.zprava}</p>
+            ) : pocetChyb > 0 ? (
+              <p className="text-chyba font-bold">
+                {pocetChyb === 1
+                  ? "Neuloženo — jedno pole je potřeba opravit. Hláška je u něj."
+                  : `Neuloženo — ${pocetChyb} pole je potřeba opravit. Hlášky jsou u nich.`}
+              </p>
+            ) : stav.stav === "ulozeno" && !neulozeno ? (
+              <p className="font-bold">
+                Uloženo, na webu už to je.{" "}
+                <a href={naWebu} target="_blank" rel="noopener" className="underline">
+                  Podívat se
+                  <span className="sr-only"> (otevře se v nové kartě)</span>
+                </a>
+              </p>
+            ) : neulozeno ? (
+              <p className="font-bold">Máte neuložené změny.</p>
+            ) : (
+              <p className="text-text-doplnek">Zatím žádné změny.</p>
+            )}
+          </div>
+        </div>
       </div>
     </form>
   );

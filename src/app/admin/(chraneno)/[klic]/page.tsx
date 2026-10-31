@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { FormularSekce } from "@/komponenty/admin/formular-sekce";
+import { adresaWebu } from "@/lib/admin/adresa-webu";
 import { vyzadujAdmina } from "@/lib/admin/autorizace";
 import { najdiSekci } from "@/lib/admin/obsah-schema";
 import { nactiObsah } from "@/lib/obsah";
@@ -26,5 +27,11 @@ export default async function AdminSekce({
 
   const hodnoty = await nactiObsah(klic);
 
-  return <FormularSekce sekce={sekce} vychozi={hodnoty} />;
+  return (
+    <FormularSekce
+      sekce={sekce}
+      vychozi={hodnoty}
+      naWebu={adresaWebu(sekce.naWebu ?? sekce.obnovit[0] ?? "/")}
+    />
+  );
 }

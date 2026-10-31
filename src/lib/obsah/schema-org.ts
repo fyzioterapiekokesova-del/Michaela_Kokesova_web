@@ -19,8 +19,6 @@ export function ordinaceJsonLd(kontakt: Obsah, seo: Obsah) {
   const telefon = textNeboNic(kontakt, "telefon");
   const email = textNeboNic(kontakt, "email");
   const adresa = textNeboNic(kontakt, "adresa");
-  const lat = textNeboNic(kontakt, "mapa_lat");
-  const lon = textNeboNic(kontakt, "mapa_lon");
   const doba = prevedOtviraciDobu(textNeboNic(kontakt, "otviraci_doba"));
   const obrazek = fotka(seo, "sdileni");
 
@@ -49,16 +47,6 @@ export function ordinaceJsonLd(kontakt: Obsah, seo: Obsah) {
       ...(adresa ? { streetAddress: adresa.replace(/\n/g, ", ") } : {}),
     },
     areaServed: { "@type": "City", name: "České Budějovice" },
-
-    ...(lat && lon
-      ? {
-          geo: {
-            "@type": "GeoCoordinates",
-            latitude: lat,
-            longitude: lon,
-          },
-        }
-      : {}),
 
     ...(doba.length > 0 ? { openingHoursSpecification: doba } : {}),
 

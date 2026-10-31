@@ -10,22 +10,22 @@ import { useState } from "react";
  * načetla rovnou, připojil by se prohlížeč ke Googlu bez vědomí návštěvníka
  * a odešla by mu jeho IP adresa.
  *
- * Bez souřadnic se nevykreslí vůbec nic.
+ * Místo se hledá podle adresy, ne podle souřadnic — souřadnice by si
+ * klientka sama nedohledala. Bez adresy pro mapu se nevykreslí vůbec nic.
  */
 export function Mapa({
-  lat,
-  lon,
+  hledat,
   adresa,
 }: {
-  lat?: string;
-  lon?: string;
+  /** Co se má v Google Mapách vyhledat, např. „Lannova 12, České Budějovice". */
+  hledat?: string;
   adresa?: string;
 }) {
   const [nacteno, setNacteno] = useState(false);
 
-  if (!lat || !lon) return null;
+  if (!hledat) return null;
 
-  const cil = `${lat},${lon}`;
+  const cil = hledat;
   const nazev = adresa ? `Mapa — ${adresa}` : "Mapa";
 
   return (
