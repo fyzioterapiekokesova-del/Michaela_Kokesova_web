@@ -1,4 +1,4 @@
-import { CILE_ODKAZU } from "../navigace.ts";
+import { VYCHOZI_SLUZBY, cileOdkazu } from "../navigace.ts";
 
 /**
  * Deklarativní schéma obsahu.
@@ -105,6 +105,11 @@ export type Sekce = {
    * z `obnovit`.
    */
   naWebu?: string;
+  /**
+   * Sekce se zobrazuje na víc stránkách (služba je v menu i patičce celého
+   * webu) — po uložení se obnoví všechno.
+   */
+  celyWeb?: boolean;
   pole: readonly Pole[];
 };
 
@@ -112,7 +117,10 @@ export type Sekce = {
 /*  Sdílené kousky                                                             */
 /* -------------------------------------------------------------------------- */
 
-const STRANKY_MOZNOSTI: readonly Moznost[] = CILE_ODKAZU.map((s) => ({
+// Výběr stránek u titulků pro vyhledávače. Služby přidané v administraci
+// tu nejsou — titulek a popis mají přímo ve svém formuláři. Původní tři
+// zůstávají, protože jejich titulky už jsou uložené pod těmihle adresami.
+const STRANKY_MOZNOSTI: readonly Moznost[] = cileOdkazu(VYCHOZI_SLUZBY).map((s) => ({
   hodnota: s.href,
   popisek: s.popis ? `${s.nazev} — ${s.popis}` : s.nazev,
 }));
@@ -474,65 +482,6 @@ export const SCHEMA: readonly Sekce[] = [
   },
 
   {
-    klic: "sluzba-fyzioterapie",
-    kratce: "Fyzioterapie",
-    nazev: "Služba — Fyzioterapie",
-    obnovit: ["/fyzioterapie"],
-    pole: [
-      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", sbalenaSkupina: true, povinne: true, max: 90 },
-      {
-        druh: "viceradkovy",
-        jmeno: "perex",
-        popisek: "Úvodní odstavec",
-        skupina: "Úvod stránky",
-        radky: 4,
-      },
-      SEKCE_PODSLUZEB,
-      ...obrazek("fotka", "Fotka", "galerie"),
-    ],
-  },
-
-  {
-    klic: "sluzba-podologie",
-    kratce: "Podologie",
-    nazev: "Služba — Podologie",
-    popis:
-      "Nejdůležitější stránka webu z hlediska vyhledávání. V Budějovicích podologii skoro nikdo nedělá.",
-    obnovit: ["/podologie"],
-    pole: [
-      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", sbalenaSkupina: true, povinne: true, max: 90 },
-      {
-        druh: "viceradkovy",
-        jmeno: "perex",
-        popisek: "Úvodní odstavec",
-        skupina: "Úvod stránky",
-        radky: 4,
-      },
-      SEKCE_PODSLUZEB,
-      ...obrazek("fotka", "Fotka", "galerie"),
-    ],
-  },
-
-  {
-    klic: "sluzba-detska",
-    kratce: "Dětská fyzioterapie",
-    nazev: "Služba — Dětská fyzioterapie",
-    obnovit: ["/detska-fyzioterapie"],
-    pole: [
-      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", sbalenaSkupina: true, povinne: true, max: 90 },
-      {
-        druh: "viceradkovy",
-        jmeno: "perex",
-        popisek: "Úvodní odstavec",
-        skupina: "Úvod stránky",
-        radky: 4,
-      },
-      SEKCE_PODSLUZEB,
-      ...obrazek("fotka", "Fotka", "galerie"),
-    ],
-  },
-
-  {
     klic: "cenik",
     nazev: "Ceník",
     popis:
@@ -751,32 +700,136 @@ export const SCHEMA: readonly Sekce[] = [
   },
 ] as const;
 
+/* -------------------------------------------------------------------------- */
+/*  Služby                                                                     */
+/* -------------------------------------------------------------------------- */
+
 /**
- * Menu administrace vlevo. Sekce úvodní stránky pohromadě, pak ostatní
- * stránky, nakonec věci, na které se sahá výjimečně.
+ * Formulář stránky služby. Je stejný pro všechny služby, i ty, které si
+ * klientka přidá — proto se skládá funkcí, ne vypisuje třikrát.
  */
-export const MENU: readonly { nazev: string; klice: readonly string[] }[] = [
-  {
-    nazev: "Úvodní stránka",
-    klice: ["hero", "potize", "postup", "vek", "o-mne-uvod", "ordinace", "kontakt"],
-  },
-  {
-    nazev: "Další stránky",
-    klice: [
-      "sluzba-fyzioterapie",
-      "sluzba-podologie",
-      "sluzba-detska",
-      "cenik",
-      "o-mne",
-      "faq",
+export function sekceSluzby(klic: string, nazev: string, slug: string): Sekce {
+  return {
+    klic,
+    nazev,
+    naWebu: `/${slug}`,
+    obnovit: [],
+    celyWeb: true,
+    pole: [
+      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", povinne: true, max: 90 },
+      {
+        druh: "viceradkovy",
+        jmeno: "perex",
+        popisek: "Úvodní odstavec",
+        skupina: "Úvod stránky",
+        radky: 4,
+      },
+      SEKCE_PODSLUZEB,
+      ...obrazek("fotka", "Fotka", "galerie"),
+      {
+        druh: "text",
+        jmeno: "seo_titulek",
+        popisek: "Titulek ve vyhledávání",
+        napoveda: "Do 60 znaků. Prázdné = „Název služby České Budějovice — Michaela Kokešová“.",
+        skupina: "Vyhledávače",
+        sbalenaSkupina: true,
+        max: 70,
+      },
+      {
+        druh: "viceradkovy",
+        jmeno: "seo_popis",
+        popisek: "Popis ve vyhledávání",
+        napoveda: "Do 155 znaků. Šedý text pod odkazem v Googlu.",
+        skupina: "Vyhledávače",
+        radky: 2,
+        max: 170,
+      },
     ],
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Stránky administrace                                                       */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Jak jsou sekce rozdělené do stránek administrace a do menu vlevo.
+ *
+ * Úvodní stránka má sekcí šest a upravují se pohromadě, pod sebou, s jedním
+ * tlačítkem Uložit — tak, jak jdou na webu. Služby mají vlastní správu
+ * (`/admin/sluzby`) a do menu se doplňují z databáze.
+ */
+export type StrankaAdminu = {
+  id: string;
+  nazev: string;
+  popis?: string;
+  /** Kam vede „Zobrazit na webu". */
+  naWebu: string;
+  sekce: readonly string[];
+};
+
+export const STRANKY_ADMINU: readonly StrankaAdminu[] = [
+  {
+    id: "uvod",
+    nazev: "Úvodní stránka",
+    popis: "Všechny bloky úvodní stránky pod sebou, v pořadí jako na webu.",
+    naWebu: "/",
+    sekce: ["hero", "potize", "postup", "vek", "o-mne-uvod", "ordinace"],
   },
-  { nazev: "Nastavení", klice: ["seo", "pravni"] },
+  { id: "cenik", nazev: "Ceník", naWebu: "/cenik", sekce: ["cenik"] },
+  { id: "o-mne", nazev: "O mně", naWebu: "/o-mne", sekce: ["o-mne"] },
+  { id: "faq", nazev: "Časté dotazy", naWebu: "/caste-dotazy", sekce: ["faq"] },
+  {
+    id: "kontakt",
+    nazev: "Kontakt a otevírací doba",
+    naWebu: "/#kontakt",
+    sekce: ["kontakt"],
+  },
+  {
+    id: "nastaveni",
+    nazev: "Nastavení",
+    popis: "Titulky pro vyhledávače a právní texty. Sem se sahá jen výjimečně.",
+    naWebu: "/",
+    sekce: ["seo", "pravni"],
+  },
 ];
+
+/** Položky menu administrace a dlaždice na přehledu, v tomhle pořadí. */
+export const MENU_ADMINU: readonly { href: string; nazev: string; popis: string }[] = [
+  {
+    href: "/admin/uvod",
+    nazev: "Úvodní stránka",
+    popis: "Úvodní blok, Co vás trápí, postup, věk, O Michaele, ordinace.",
+  },
+  {
+    href: "/admin/sluzby",
+    nazev: "Služby",
+    popis: "Přidat službu, pořadí v menu, texty a fotky služeb.",
+  },
+  { href: "/admin/cenik", nazev: "Ceník", popis: "Oblasti a položky s cenami." },
+  { href: "/admin/o-mne", nazev: "O mně", popis: "Text o vás, portrét, vzdělání, galerie." },
+  { href: "/admin/faq", nazev: "Časté dotazy", popis: "Otázky, odpovědi a jejich pořadí." },
+  {
+    href: "/admin/kontakt",
+    nazev: "Kontakt",
+    popis: "Telefon, e-mail, adresa, otevírací doba, mapa.",
+  },
+  {
+    href: "/admin/nastaveni",
+    nazev: "Nastavení",
+    popis: "Titulky pro vyhledávače a právní texty.",
+  },
+];
+
+export function najdiStrankuAdminu(id: string): StrankaAdminu | undefined {
+  return STRANKY_ADMINU.find((s) => s.id === id);
+}
+
+/** Na které stránce administrace sekce je — pro staré odkazy `/admin/hero`. */
+export function strankaSeSekci(klic: string): StrankaAdminu | undefined {
+  return STRANKY_ADMINU.find((s) => s.sekce.includes(klic));
+}
 
 export function najdiSekci(klic: string): Sekce | undefined {
   return SCHEMA.find((s) => s.klic === klic);
 }
-
-/** Všechny klíče obsahu. */
-export const KLICE = SCHEMA.map((s) => s.klic);

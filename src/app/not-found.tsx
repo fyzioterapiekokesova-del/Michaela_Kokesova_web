@@ -3,8 +3,7 @@ import Link from "next/link";
 import { RamWebu } from "@/komponenty/ram-webu";
 import { Tlacitko } from "@/komponenty/tlacitko";
 import { Sipka } from "@/komponenty/sipka";
-import { SLUZBY } from "@/lib/navigace";
-import { nactiObsah } from "@/lib/obsah";
+import { nactiObsah, nactiViditelneSluzby } from "@/lib/obsah";
 import { textNeboNic } from "@/lib/obsah/cteni";
 import { telHref, telText } from "@/lib/kontakt";
 
@@ -26,7 +25,10 @@ const ODKAZ =
   "klik text-odkaz lg:text-odkaz-pc border-linka w-full justify-between gap-4 border-b";
 
 export default async function Nenalezeno() {
-  const kontakt = await nactiObsah("kontakt");
+  const [kontakt, sluzby] = await Promise.all([
+    nactiObsah("kontakt"),
+    nactiViditelneSluzby(),
+  ]);
   const telefon = textNeboNic(kontakt, "telefon");
 
   return (
@@ -40,7 +42,7 @@ export default async function Nenalezeno() {
           </p>
 
           <ul className="mt-8 list-none">
-            {SLUZBY.map((sluzba) => (
+            {sluzby.map((sluzba) => (
               <li key={sluzba.href}>
                 <Link href={sluzba.href} className={ODKAZ}>
                   {sluzba.nazev}

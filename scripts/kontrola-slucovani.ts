@@ -8,11 +8,14 @@
  *  - zapíšou se jen pole, která schéma zná,
  *  - odkaz nesmí vést na stránku, která na webu neexistuje,
  *  - popisek fotky je povinný, ale až když je fotka nahraná,
- *  - přehození položek v seznamu nepřehodí jejich fotky.
+ *  - přehození položek v seznamu nepřehodí jejich fotky,
+ *  - služba přidaná v administraci nedostane adresu jiné stránky.
  */
 
 import { zvalidujASluc } from "../src/lib/admin/slucovani.ts";
 import { najdiSekci } from "../src/lib/admin/obsah-schema.ts";
+import { chybaAdresy, prectiSluzby, vytvorSlug } from "../src/lib/sluzby.ts";
+import { VYCHOZI_OBSAH } from "../src/lib/obsah/vychozi.ts";
 
 let spadlo = 0;
 
@@ -222,6 +225,35 @@ const utek = zvalidujASluc(
   {},
 );
 overit("cesta s ../ se odmítne", utek.stav === "chyba");
+
+/* 8. Služby přidávané v administraci -------------------------------------- */
+
+const sluzby = prectiSluzby(VYCHOZI_OBSAH.sluzby);
+overit("výchozí seznam má tři služby", sluzby.length === 3);
+overit(
+  "dětská fyzioterapie má starý klíč obsahu",
+  sluzby[2]?.klic === "sluzba-detska" && sluzby[2]?.slug === "detska-fyzioterapie",
+);
+overit("adresa z názvu bez háčků", vytvorSlug("Lymfodrenáž rukou") === "lymfodrenaz-rukou");
+overit("adresa z názvu bez krajních pomlček", vytvorSlug(" — Kineziotaping! ") === "kineziotaping");
+overit("nová adresa projde", chybaAdresy("lymfodrenaz", sluzby) === undefined);
+overit("adresa ceníku je obsazená", chybaAdresy("cenik", sluzby) !== undefined);
+overit("adresa administrace je obsazená", chybaAdresy("admin", sluzby) !== undefined);
+overit("existující služba se nezaloží dvakrát", chybaAdresy("podologie", sluzby) !== undefined);
+overit("velká písmena a mezery neprojdou", chybaAdresy("Nova sluzba", sluzby) !== undefined);
+overit(
+  "rozbitá položka v seznamu se vynechá",
+  prectiSluzby({ seznam: [{ slug: "../x", klic: "sluzba-x", nazev: "X" }] }).length === 0,
+);
+overit(
+  "odkaz na novou službu projde, když ji klientka přidala",
+  zvalidujASluc(
+    potize,
+    { polozky: [{ text: "Oteklé nohy", href: "/lymfodrenaz" }], telefon_text: "Zavolat" },
+    {},
+    [{ href: "/lymfodrenaz", nazev: "Lymfodrenáž" }],
+  ).stav === "ok",
+);
 
 console.log(
   spadlo === 0 ? "\nVšechno prošlo." : `\n${spadlo} kontrol neprošlo.`,

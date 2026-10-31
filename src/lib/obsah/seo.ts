@@ -17,12 +17,28 @@ export function zakladniAdresa(): string {
   return process.env.NEXT_PUBLIC_URL ?? "https://www.fyzioterapiekokesova.cz";
 }
 
-export async function metadataProStranku(href: string): Promise<Metadata> {
+/**
+ * Titulek a popis, které má stránka sama u sebe — služby je mají přímo
+ * ve svém formuláři, protože nově přidaná služba v seznamu stránek
+ * u vyhledávačů není. Co je vyplněné tady, vyhrává.
+ */
+type VlastniSeo = {
+  titulek?: string;
+  popis?: string;
+  /** Když není vyplněné nic, použije se tohle — prázdný titulek nechceme. */
+  nahradniTitulek?: string;
+};
+
+export async function metadataProStranku(
+  href: string,
+  vlastni: VlastniSeo = {},
+): Promise<Metadata> {
   const seo = await nactiObsah("seo");
   const stranka = seznam(seo, "stranky").find((s) => text(s, "href") === href);
 
-  const titulek = stranka ? text(stranka, "titulek") : "";
-  const popis = stranka ? text(stranka, "popis") : "";
+  const titulek =
+    vlastni.titulek || (stranka ? text(stranka, "titulek") : "") || vlastni.nahradniTitulek || "";
+  const popis = vlastni.popis || (stranka ? text(stranka, "popis") : "");
   const obrazek = fotka(seo, "sdileni");
 
   return {

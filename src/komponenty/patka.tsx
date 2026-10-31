@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MENU, PRAVNI, SLUZBY } from "@/lib/navigace";
+import { PRAVNI, menuWebu, type Stranka } from "@/lib/navigace";
 import { mailtoHref, telHref, telText } from "@/lib/kontakt";
 import { TlacitkoZmenaSouhlasu } from "./tlacitko-souhlas";
 
@@ -23,9 +23,16 @@ export type UdajeKontakt = {
   facebook?: string;
 };
 
-export function Patka({ kontakt }: { kontakt: UdajeKontakt }) {
+export function Patka({
+  kontakt,
+  sluzby,
+}: {
+  kontakt: UdajeKontakt;
+  /** Služby viditelné na webu, v pořadí z administrace. */
+  sluzby: readonly Stranka[];
+}) {
   const rok = new Date().getFullYear();
-  const rozcestnik = MENU.filter((p) => p.druh !== "rozbaleni");
+  const rozcestnik = menuWebu(sluzby).filter((p) => p.druh !== "rozbaleni");
 
   return (
     <footer className="bg-text text-patka-text na-tmavem mt-auto">
@@ -141,7 +148,7 @@ export function Patka({ kontakt }: { kontakt: UdajeKontakt }) {
               Služby
             </p>
             <ul className="mt-3 list-none">
-              {SLUZBY.map((sluzba) => (
+              {sluzby.map((sluzba) => (
                 <li key={sluzba.href}>
                   <Link
                     href={sluzba.href}

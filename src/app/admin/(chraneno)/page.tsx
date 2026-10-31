@@ -1,42 +1,37 @@
 import Link from "next/link";
-import { SCHEMA } from "@/lib/admin/obsah-schema";
+import { MENU_ADMINU } from "@/lib/admin/obsah-schema";
 
 /**
  * Rozcestník administrace.
  *
- * Sekce jsou v pořadí, v jakém jdou na webu, aby se v tom Michaela vyznala
- * bez vysvětlování. Každá se ukládá zvlášť.
+ * Stejné položky jako menu vlevo, jen s popisem, co v nich je — ať se
+ * v tom Michaela vyzná bez vysvětlování.
  */
 export default function AdminUvod() {
   return (
-    <>
-      <h1 className="text-h2 lg:text-h2-pc">Co chcete upravit?</h1>
-      <p className="text-perex lg:text-perex-pc text-text-doplnek mt-4 max-w-[52ch]">
-        Sekce jsou seřazené tak, jak jdou na webu. Každou uložíte zvlášť —
-        rozdělaná práce v jedné sekci se do jiné nepromítne.
+    <div className="max-w-[64rem]">
+      <h1 className="text-2xl font-bold">Co chcete upravit?</h1>
+      <p className="text-text-doplnek mt-1 text-[0.9375rem]">
+        Vyberte část webu. Na každé stránce je dole tlačítko Uložit změny.
       </p>
 
-      <ul className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {SCHEMA.map((sekce) => (
-          <li key={sekce.klic}>
+      <ul className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {MENU_ADMINU.map((polozka) => (
+          <li key={polozka.href}>
             <Link
-              href={`/admin/${sekce.klic}`}
-              className="border-linka bg-povrch rounded-karta hover:border-text flex h-full flex-col p-5 transition-colors duration-150"
+              href={polozka.href}
+              className="border-linka hover:border-text flex h-full flex-col rounded-lg border bg-white p-4 transition-colors duration-150"
             >
-              <span className="text-odkaz">{sekce.nazev}</span>
-              {sekce.popis ? (
-                <span className="text-text-doplnek mt-2 text-[1.0625rem]">
-                  {sekce.popis}
-                </span>
-              ) : null}
+              <span className="font-bold">{polozka.nazev}</span>
+              <span className="text-text-doplnek mt-1 text-sm">{polozka.popis}</span>
             </Link>
           </li>
         ))}
       </ul>
 
-      <section className="border-linka bg-povrch rounded-karta mt-12 p-6">
-        <h2 className="text-h3">Záloha obsahu</h2>
-        <p className="text-text-doplnek mt-3 max-w-[60ch] text-[1.0625rem]">
+      <section className="border-linka mt-8 rounded-lg border bg-white p-4 sm:p-5">
+        <h2 className="text-lg font-bold">Záloha obsahu</h2>
+        <p className="text-text-doplnek mt-1 max-w-[60ch] text-sm">
           Stáhne všechny texty a odkazy na fotky do jednoho souboru. Hodí se
           udělat pokaždé, než se pustíte do větších změn — kdyby se něco
           pokazilo, je z čeho obsah vrátit zpátky.
@@ -44,12 +39,12 @@ export default function AdminUvod() {
         <a
           href="/admin/zaloha"
           download
-          className="klik rounded-tlacitko bg-linka hover:bg-seda mt-5 justify-center px-6 text-[1.0625rem] font-bold transition-colors duration-150"
+          className="hover:bg-plocha mt-3 inline-flex h-9 items-center rounded-md border border-[#c9cbc5] bg-white px-3 text-sm font-semibold"
           data-akce="admin-zaloha"
         >
           Stáhnout zálohu obsahu
         </a>
       </section>
-    </>
+    </div>
   );
 }

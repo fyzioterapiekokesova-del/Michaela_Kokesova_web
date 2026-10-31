@@ -13,7 +13,8 @@ import { FormularKontakt } from "@/komponenty/formular-kontakt";
 import { Mapa } from "@/komponenty/mapa";
 import { StrukturovanaData } from "@/komponenty/strukturovana-data";
 import { ordinaceJsonLd } from "@/lib/obsah/schema-org";
-import { nactiVice } from "@/lib/obsah";
+import { nactiVice, nactiViditelneSluzby } from "@/lib/obsah";
+import { jeZnamaStranka } from "@/lib/navigace";
 import { metadataProStranku } from "@/lib/obsah/seo";
 import {
   fotkyZeSeznamu,
@@ -37,21 +38,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Uvod() {
-  const o = await nactiVice([
-    "hero",
-    "potize",
-    "postup",
-    "vek",
-    "o-mne-uvod",
-    "ordinace",
-    "kontakt",
-    "seo",
+  const [o, sluzby] = await Promise.all([
+    nactiVice(["hero", "potize", "postup", "vek", "o-mne-uvod", "ordinace", "kontakt", "seo"]),
+    nactiViditelneSluzby(),
   ]);
 
   const telefon = textNeboNic(o.kontakt, "telefon");
   const potize = seznam(o.potize, "polozky")
     .map((p) => ({ text: text(p, "text"), href: text(p, "href") }))
-    .filter((p) => p.text && p.href);
+    // Odkaz na službu, kterou klientka mezitím skryla, by vedl na 404.
+    .filter((p) => p.text && p.href && jeZnamaStranka(p.href, sluzby));
 
   const kroky = seznam(o.postup, "kroky")
     .map((k) => ({ nadpis: text(k, "nadpis"), text: text(k, "text") }))
@@ -70,7 +66,7 @@ export default async function Uvod() {
     <>
       {/* Popis ordinace pro vyhledávače — adresa a otevírací doba se doplní
           samy, jakmile je klientka vyplní v administraci. */}
-      <StrukturovanaData data={ordinaceJsonLd(o.kontakt, o.seo)} />
+      <StrukturovanaData data={ordinaceJsonLd(o.kontakt, o.seo, sluzby)} />
 
       <Hero obsah={o.hero} telefon={telefon} />
 

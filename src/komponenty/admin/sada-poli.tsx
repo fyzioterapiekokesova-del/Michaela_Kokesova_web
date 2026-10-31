@@ -43,10 +43,15 @@ function maChybu(chyby: Record<string, string>, cesta: string): boolean {
 
 export function SadaPoli({
   pola,
+  vnorene,
   ...zbytek
-}: SpolecneVlastnosti & { pola: readonly Pole[] }) {
+}: SpolecneVlastnosti & {
+  pola: readonly Pole[];
+  /** Sekce je pod nadpisem stránky s víc sekcemi — bloky dostanou `h3`. */
+  vnorene?: boolean;
+}) {
   return zbytek.cesta === "" ? (
-    <Bloky pola={pola} {...zbytek} />
+    <Bloky pola={pola} vnorene={vnorene} {...zbytek} />
   ) : (
     <MrizkaPoli pola={pola} {...zbytek} />
   );
@@ -95,8 +100,10 @@ function SbalenyBlok({
 
 function Bloky({
   pola,
+  vnorene,
   ...zbytek
-}: SpolecneVlastnosti & { pola: readonly Pole[] }) {
+}: SpolecneVlastnosti & { pola: readonly Pole[]; vnorene?: boolean }) {
+  const Nadpis = vnorene ? "h3" : "h2";
   const hlavni = pola.filter((p) => !p.dalsi);
   const dalsi = pola.filter((p) => p.dalsi);
 
@@ -119,7 +126,7 @@ function Bloky({
         }
         return (
           <section key={i} className={KARTA}>
-            {blok.nadpis ? <h2 className={NADPIS_KARTY}>{blok.nadpis}</h2> : null}
+            {blok.nadpis ? <Nadpis className={NADPIS_KARTY}>{blok.nadpis}</Nadpis> : null}
             <MrizkaPoli
               pola={blok.pola}
               className={blok.nadpis ? "" : "-mt-4"}

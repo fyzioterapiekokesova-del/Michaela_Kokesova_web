@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
-import { PRAVNI, SLUZBY } from "@/lib/navigace";
+import { PRAVNI } from "@/lib/navigace";
+import { nactiViditelneSluzby } from "@/lib/obsah";
 import { zakladniAdresa } from "@/lib/obsah/seo";
 
 /**
@@ -11,13 +12,14 @@ import { zakladniAdresa } from "@/lib/obsah/seo";
  * Podologie má nejvyšší prioritu — je to jediná služba, kde je v Budějovicích
  * slabá konkurence, a na ní stojí celá dohledatelnost.
  */
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const zaklad = zakladniAdresa();
+  const sluzby = await nactiViditelneSluzby();
   const ted = new Date();
 
   const stranky: { cesta: string; priorita: number; zmena: "weekly" | "monthly" | "yearly" }[] = [
     { cesta: "/", priorita: 1, zmena: "weekly" },
-    ...SLUZBY.map((s) => ({
+    ...sluzby.map((s) => ({
       cesta: s.href,
       priorita: s.href === "/podologie" ? 0.9 : 0.8,
       zmena: "monthly" as const,

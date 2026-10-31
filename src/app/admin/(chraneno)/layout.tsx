@@ -3,6 +3,7 @@ import { vyzadujAdmina } from "@/lib/admin/autorizace";
 import { odhlasit } from "@/app/admin/akce/prihlaseni";
 import { adresaWebu } from "@/lib/admin/adresa-webu";
 import { MenuAdminu } from "@/komponenty/admin/menu";
+import { nactiSluzby } from "@/lib/obsah";
 
 /**
  * Layout přihlášené části administrace.
@@ -18,6 +19,7 @@ export default async function ChranenyLayout({
   children,
 }: LayoutProps<"/admin">) {
   const admin = await vyzadujAdmina();
+  const sluzby = await nactiSluzby();
 
   return (
     <>
@@ -54,7 +56,9 @@ export default async function ChranenyLayout({
       </header>
 
       <div className="flex flex-1 flex-col md:flex-row">
-        <MenuAdminu />
+        <MenuAdminu
+          sluzby={sluzby.map((s) => ({ klic: s.klic, nazev: s.nazev, zobrazit: s.zobrazit }))}
+        />
         <main id="obsah-adminu" className="min-w-0 flex-1 px-4 py-6 lg:px-8">
           {children}
         </main>

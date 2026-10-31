@@ -2,6 +2,8 @@ import { jeSupabaseNastaveny } from "@/lib/supabase/nastaveni";
 import { supabaseServer } from "@/lib/supabase/server";
 import type { UdajeKontakt } from "@/komponenty/patka";
 import { VYCHOZI_OBSAH, type Obsah } from "./vychozi";
+import { prectiSluzby, viditelneStranky, type Sluzba } from "@/lib/sluzby";
+import type { Stranka } from "@/lib/navigace";
 
 /**
  * Čtení obsahu webu.
@@ -91,4 +93,18 @@ export async function nactiKontakt(): Promise<UdajeKontakt> {
     instagram: retezec(k.instagram),
     facebook: retezec(k.facebook),
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Služby — menu, patička, sitemapa i stránky služeb                          */
+/* -------------------------------------------------------------------------- */
+
+/** Všechny služby včetně skrytých, v pořadí z administrace. */
+export async function nactiSluzby(): Promise<Sluzba[]> {
+  return prectiSluzby(await nactiObsah("sluzby"));
+}
+
+/** Jen služby, které jsou na webu vidět — pro menu a odkazy. */
+export async function nactiViditelneSluzby(): Promise<Stranka[]> {
+  return viditelneStranky(await nactiSluzby());
 }

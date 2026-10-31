@@ -1,4 +1,4 @@
-import { jeZnamaStranka } from "../navigace.ts";
+import { VYCHOZI_SLUZBY, jeZnamaStranka, type Stranka } from "../navigace.ts";
 import {
   VYCHOZI_POZICE,
   VYCHOZI_ZOOM,
@@ -49,6 +49,8 @@ export function zvalidujASluc(
   sekce: Sekce,
   nove: unknown,
   puvodni: unknown,
+  /** Služby, na které smí vést odkazy. Výchozí jen pro kontrolní skripty. */
+  sluzby: readonly Stranka[] = VYCHOZI_SLUZBY,
 ): Vysledek {
   const chyby: Chyba[] = [];
   const hodnota = projdiPole(
@@ -57,6 +59,7 @@ export function zvalidujASluc(
     jeObjekt(puvodni) ? puvodni : {},
     "",
     chyby,
+    sluzby,
   );
 
   return chyby.length > 0 ? { stav: "chyba", chyby } : { stav: "ok", hodnota };
@@ -68,6 +71,7 @@ function projdiPole(
   puvodni: Objekt,
   prefix: string,
   chyby: Chyba[],
+  sluzby: readonly Stranka[],
 ): Objekt {
   const vysledek: Objekt = {};
 
@@ -128,7 +132,7 @@ function projdiPole(
             chyby.push({ cesta, zprava: `Vyberte, kam odkaz vede.` });
           }
           vysledek[pole.jmeno] = "";
-        } else if (!jeZnamaStranka(hodnota)) {
+        } else if (!jeZnamaStranka(hodnota, sluzby)) {
           // Adresa, která na webu neexistuje, by udělala mrtvý odkaz.
           chyby.push({
             cesta,
@@ -219,6 +223,7 @@ function projdiPole(
             zaklad,
             `${cesta}[${poradi}]`,
             chyby,
+            sluzby,
           );
           return { _id: id, ...slouceno };
         });

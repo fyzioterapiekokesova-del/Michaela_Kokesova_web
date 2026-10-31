@@ -1,7 +1,7 @@
 "use server";
 
 import { overAdmina } from "@/lib/admin/autorizace";
-import { najdiSekci } from "@/lib/admin/obsah-schema";
+import { sekcePodleKlice } from "@/lib/admin/sekce";
 import { MAX_BAJTU, novaCesta, poznejFormat } from "@/lib/admin/obrazky";
 import { KOS_FOTKY } from "@/lib/supabase/nastaveni";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -29,7 +29,7 @@ export async function nahrajFotku(formular: FormData): Promise<StavNahrani> {
   }
 
   const klic = String(formular.get("klic") ?? "");
-  if (!najdiSekci(klic)) {
+  if (!(await sekcePodleKlice(klic))) {
     return { stav: "chyba", zprava: "Takovou sekci web nemá." };
   }
 

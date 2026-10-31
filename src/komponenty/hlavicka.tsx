@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
-import { MENU, type PolozkaMenu } from "@/lib/navigace";
+import { type PolozkaMenu } from "@/lib/navigace";
 import { telHref, telText } from "@/lib/kontakt";
 
 /**
@@ -21,9 +21,11 @@ import { telHref, telText } from "@/lib/kontakt";
 type Vlastnosti = {
   /** Telefon z obsahu. Bez něj se pruh ani odkaz nevykreslí. */
   telefon?: string;
+  /** Položky menu — služby v nich přicházejí z administrace. */
+  menu: readonly PolozkaMenu[];
 };
 
-export function Hlavicka({ telefon }: Vlastnosti) {
+export function Hlavicka({ telefon, menu }: Vlastnosti) {
   const cesta = usePathname();
   const [menuOtevrene, setMenuOtevrene] = useState(false);
 
@@ -46,7 +48,7 @@ export function Hlavicka({ telefon }: Vlastnosti) {
           <div className="hidden items-center gap-8 lg:flex">
             <nav aria-label="Hlavní nabídka">
               <ul className="flex list-none items-center gap-1">
-                {MENU.map((polozka) => (
+                {menu.map((polozka) => (
                   <li key={polozka.nazev}>
                     <PolozkaPocitac polozka={polozka} cesta={cesta} />
                   </li>
@@ -93,7 +95,7 @@ export function Hlavicka({ telefon }: Vlastnosti) {
       ) : null}
 
       {menuOtevrene ? (
-        <MenuMobil cesta={cesta} zavrit={() => setMenuOtevrene(false)} />
+        <MenuMobil menu={menu} cesta={cesta} zavrit={() => setMenuOtevrene(false)} />
       ) : null}
     </header>
   );
@@ -290,7 +292,15 @@ function Rozbaleni({
 /*  Mobil                                                                      */
 /* -------------------------------------------------------------------------- */
 
-function MenuMobil({ cesta, zavrit }: { cesta: string; zavrit: () => void }) {
+function MenuMobil({
+  menu,
+  cesta,
+  zavrit,
+}: {
+  menu: readonly PolozkaMenu[];
+  cesta: string;
+  zavrit: () => void;
+}) {
   // Escape zavírá i na mobilu — na tabletu s klávesnicí to lidé používají.
   useEffect(() => {
     function naKlavesu(e: KeyboardEvent) {
@@ -307,7 +317,7 @@ function MenuMobil({ cesta, zavrit }: { cesta: string; zavrit: () => void }) {
       className="bg-povrch border-linka border-t lg:hidden"
     >
       <ul className="obal list-none py-2">
-        {MENU.map((polozka) => {
+        {menu.map((polozka) => {
           if (polozka.druh === "rozbaleni") {
             // Na mobilu se nic nerozbaluje — služby jsou vidět rovnou.
             return (

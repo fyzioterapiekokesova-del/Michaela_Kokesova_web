@@ -1,11 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useId, useState, useTransition, type ReactNode } from "react";
+import { createContext, useContext, useId, useState, useTransition, type ReactNode } from "react";
 import { nahrajFotku } from "@/app/admin/akce/fotky";
 import { POMERY, VyrezObrazku } from "@/komponenty/admin/vyrez-obrazku";
 import type { Pole } from "@/lib/admin/obsah-schema";
-import { CILE_ODKAZU } from "@/lib/navigace";
+import type { Stranka } from "@/lib/navigace";
 import { stylVyrezu } from "@/lib/obrazky/pozice";
 import { adresaFotky } from "@/lib/supabase/nastaveni";
 
@@ -22,6 +22,15 @@ import { adresaFotky } from "@/lib/supabase/nastaveni";
  */
 
 export type Hodnoty = Record<string, unknown>;
+
+/**
+ * Stránky, na které smí vést odkaz (výběr u „Co vás trápí"). Služby si
+ * klientka přidává, takže seznam přichází ze serveru přes formulář stránky.
+ */
+export const CileOdkazu = createContext<readonly Stranka[]>([]);
+
+/** Stejný limit jako na serveru (`lib/admin/obrazky.ts`) a v koši Supabase. */
+const MAX_MB = 5;
 
 type Vlastnosti = {
   pole: Pole;
@@ -53,6 +62,21 @@ const VSTUP_CHYBA = "border-chyba border-2";
 export const TLACITKO =
   "inline-flex h-9 items-center justify-center rounded-md border border-[#c9cbc5] " +
   "bg-white px-3 text-sm font-semibold hover:bg-plocha disabled:opacity-40";
+
+/**
+ * Doporučená velikost fotky podle obrazového místa.
+ *
+ * Poměr stran sedí s `POMERY` ve výřezu. Šířka je zhruba dvojnásobek místa
+ * na webu, aby fotka byla ostrá i na displejích s jemným rozlišením; galerie
+ * víc, protože se otevírá zvětšená přes celou obrazovku. Obrázek pro sdílení
+ * má rozměr, který čtou Facebook a zprávy.
+ */
+const DOPORUCENA_VELIKOST: Record<string, string> = {
+  hero: "1200 × 1680 px, na výšku",
+  portret: "1200 × 1500 px, na výšku",
+  galerie: "1600 × 1200 px, na šířku",
+  sdileni: "1200 × 630 px, na šířku",
+};
 
 function retezec(hodnoty: Hodnoty, jmeno: string, vychozi = ""): string {
   const h = hodnoty[jmeno];
@@ -140,6 +164,7 @@ export function PoleFormulare({
   popisFotky,
 }: Vlastnosti) {
   const id = useId();
+  const cile = useContext(CileOdkazu);
   const chyba = chyby[cesta];
   const idNapovedy = pole.napoveda ? `${id}-napoveda` : undefined;
   const idChyby = chyba ? `${id}-chyba` : undefined;
@@ -251,7 +276,7 @@ export function PoleFormulare({
             className={`${vstup} ${chyba ? VSTUP_CHYBA : ""}`}
           >
             <option value="">— vyberte stránku —</option>
-            {CILE_ODKAZU.map((s) => (
+            {cile.map((s) => (
               <option key={s.href} value={s.href}>
                 {s.popis ? `${s.nazev} — ${s.popis}` : s.nazev}
               </option>
@@ -338,10 +363,25 @@ function PoleObrazku({
     data.set("soubor", soubor);
     data.set("klic", klicSekce);
 
-    // Typ, velikost i jméno souboru řeší server. Tady se nic neověřuje —
-    // kontrola v prohlížeči je pohodlí, ne ochrana.
+    // Typ, velikost i jméno souboru hlídá server. Velikost se tu kontroluje
+    // navíc jen kvůli hlášce: soubor nad limit odesílání by server vůbec
+    // nedostal a nahrávání by spadlo bez vysvětlení.
+    if (soubor.size > MAX_MB * 1024 * 1024) {
+      const mb = (soubor.size / 1024 / 1024).toFixed(1);
+      setChybaNahrani(
+        `Fotka má ${mb} MB, víc než ${MAX_MB} MB nahrát nejde. Zmenšete ji prosím.`,
+      );
+      return;
+    }
+
     zacniNahravat(async () => {
-      const vysledek = await nahrajFotku(data);
+      let vysledek;
+      try {
+        vysledek = await nahrajFotku(data);
+      } catch {
+        setChybaNahrani("Fotku se nepodařilo nahrát. Zkuste to prosím znovu.");
+        return;
+      }
       if (vysledek.stav === "chyba") {
         setChybaNahrani(vysledek.zprava);
         return;
@@ -405,7 +445,13 @@ function PoleObrazku({
               className="sr-only"
             />
           </label>
-          <p className="text-text-doplnek text-sm">JPG, PNG nebo WEBP, nejvýš 5 MB.</p>
+          <p className="text-text-doplnek max-w-[34ch] text-sm">
+            {DOPORUCENA_VELIKOST[pole.varianta]
+              ? `Ideálně ${DOPORUCENA_VELIKOST[pole.varianta]}. `
+              : null}
+            JPG, PNG nebo WEBP do 5 MB. Větší rozměr nevadí, web si fotku
+            zmenší sám.
+          </p>
 
           {cesta ? (
             <>

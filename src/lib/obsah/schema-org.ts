@@ -1,4 +1,4 @@
-import { SLUZBY } from "@/lib/navigace";
+import type { Stranka } from "@/lib/navigace";
 import { telHref } from "@/lib/kontakt";
 import { fotka, seznam, text, textNeboNic } from "./cteni";
 import { prevedOtviraciDobu } from "./otviraci-doba";
@@ -14,7 +14,7 @@ import type { Obsah } from "./vychozi";
  * Adresa ani otevírací doba se nevymýšlí — dokud je klientka nedodá,
  * prostě v datech nejsou.
  */
-export function ordinaceJsonLd(kontakt: Obsah, seo: Obsah) {
+export function ordinaceJsonLd(kontakt: Obsah, seo: Obsah, sluzby: readonly Stranka[]) {
   const zaklad = zakladniAdresa();
   const telefon = textNeboNic(kontakt, "telefon");
   const email = textNeboNic(kontakt, "email");
@@ -51,7 +51,7 @@ export function ordinaceJsonLd(kontakt: Obsah, seo: Obsah) {
     ...(doba.length > 0 ? { openingHoursSpecification: doba } : {}),
 
     medicalSpecialty: "PhysicalTherapy",
-    availableService: SLUZBY.map((s) => ({
+    availableService: sluzby.map((s) => ({
       "@type": "MedicalTherapy",
       name: s.nazev,
       url: `${zaklad}${s.href}`,

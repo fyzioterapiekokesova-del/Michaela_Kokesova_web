@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { overAdmina } from "@/lib/admin/autorizace";
-import { najdiSekci } from "@/lib/admin/obsah-schema";
+import { sekcePodleKlice, sluzbyJakoStranky } from "@/lib/admin/sekce";
 import { zvalidujASluc, type Chyba } from "@/lib/admin/slucovani";
 import { VYCHOZI_OBSAH } from "@/lib/obsah/vychozi";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -33,10 +33,11 @@ export async function ulozSekci(
     return { stav: "chyba", zprava: opravneni.zprava };
   }
 
-  const sekce = najdiSekci(klic);
-  if (!sekce) {
+  const nalezeno = await sekcePodleKlice(klic);
+  if (!nalezeno) {
     return { stav: "chyba", zprava: "Takovou sekci web nemá." };
   }
+  const { sekce, sluzby } = nalezeno;
 
   let nove: unknown;
   try {
@@ -64,7 +65,7 @@ export async function ulozSekci(
   }
 
   const puvodni = radek?.value ?? VYCHOZI_OBSAH[klic] ?? {};
-  const vysledek = zvalidujASluc(sekce, nove, puvodni);
+  const vysledek = zvalidujASluc(sekce, nove, puvodni, sluzbyJakoStranky(sluzby));
 
   if (vysledek.stav === "chyba") {
     return { stav: "chyba", chyby: vysledek.chyby };
@@ -84,6 +85,8 @@ export async function ulozSekci(
 
   // Stránky, kterých se sekce týká, se musí přegenerovat — jinak by změna
   // byla vidět až po vypršení revalidace.
+  // Služba je v menu a patičce každé stránky, proto se obnoví celý web.
+  if (sekce.celyWeb) revalidatePath("/", "layout");
   for (const adresa of sekce.obnovit) revalidatePath(adresa);
   revalidatePath("/admin", "layout");
 

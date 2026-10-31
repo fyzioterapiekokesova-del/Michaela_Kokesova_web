@@ -3,32 +3,35 @@ import { Tlacitko } from "@/komponenty/tlacitko";
 import { DlazdiceSluzby } from "@/komponenty/dlazdice";
 import { ObrazoveMisto } from "@/komponenty/obrazove-misto";
 import { PrazdnyStav } from "@/komponenty/karty";
-import { SLUZBY } from "@/lib/navigace";
+import type { Stranka } from "@/lib/navigace";
 import { telHref, telText } from "@/lib/kontakt";
 import { fotka, seznam, text, textNeboNic, vyrez } from "@/lib/obsah/cteni";
 import type { Obsah } from "@/lib/obsah/vychozi";
 
 /**
- * Společná stavba všech tří stránek služeb. Liší se jen obsahem, ne
+ * Společná stavba všech stránek služeb. Liší se jen obsahem, ne
  * rozvržením — kdyby měla každá vlastní kód, rozjely by se.
  *
- * Na konci je rozcestník na zbylé dvě služby. Rozbalovací nabídka Služeb
+ * Na konci je rozcestník na ostatní služby. Rozbalovací nabídka Služeb
  * je jen v hlavičce, tohle je pro toho, kdo doroloval dolů.
  */
 export function StrankaSluzby({
   obsah,
   telefon,
   aktualni,
+  sluzby,
 }: {
   obsah: Obsah;
   telefon?: string;
   /** Adresa téhle služby — vyřadí ji z rozcestníku na konci. */
   aktualni: string;
+  /** Služby viditelné na webu — do rozcestníku na konci. */
+  sluzby: readonly Stranka[];
 }) {
   const casti = seznam(obsah, "casti").filter((c) => text(c, "nadpis"));
   const obrazek = fotka(obsah, "fotka");
   const perex = textNeboNic(obsah, "perex");
-  const dalsi = SLUZBY.filter((s) => s.href !== aktualni);
+  const dalsi = sluzby.filter((s) => s.href !== aktualni);
 
   return (
     <>

@@ -108,6 +108,38 @@ export const VYCHOZI_OBSAH: Record<string, Obsah> = {
     prijemce: "",
   },
 
+  // Seznam služeb. Obsah každé služby je v jejím vlastním záznamu (`klic`).
+  // Klíč dětské fyzioterapie je kratší než adresa — vznikl dřív, než šly
+  // služby přidávat, a měnit ho by znamenalo přesouvat uložený obsah.
+  sluzby: {
+    seznam: [
+      {
+        _id: "fyzioterapie",
+        slug: "fyzioterapie",
+        nazev: "Fyzioterapie",
+        popis: "Bolesti zad, kloubů, po úrazu",
+        klic: "sluzba-fyzioterapie",
+        zobrazit: true,
+      },
+      {
+        _id: "podologie",
+        slug: "podologie",
+        nazev: "Podologie",
+        popis: "Chodidla, nehty, otlaky",
+        klic: "sluzba-podologie",
+        zobrazit: true,
+      },
+      {
+        _id: "detska-fyzioterapie",
+        slug: "detska-fyzioterapie",
+        nazev: "Dětská fyzioterapie",
+        popis: "Od šestinedělí po školáky",
+        klic: "sluzba-detska",
+        zobrazit: true,
+      },
+    ],
+  },
+
   "sluzba-fyzioterapie": {
     nadpis: "Fyzioterapie České Budějovice",
     perex:
