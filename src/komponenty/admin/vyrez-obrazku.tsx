@@ -131,7 +131,7 @@ export function VyrezObrazku({
 
   return (
     <div className="mt-4">
-      <p className="font-bold">Výřez — co z fotky bude na webu vidět</p>
+      <p className="text-[0.9375rem] font-semibold">Výřez — co z fotky bude na webu vidět</p>
 
       <div
         ref={ramecek}
@@ -191,15 +191,15 @@ export function VyrezObrazku({
         />
       </div>
 
-      <p className="text-text-doplnek mt-2 text-[1.0625rem]">
+      <p className="text-text-doplnek mt-2 text-sm">
         Chyťte fotku a posuňte ji, kam potřebujete; jde to i šipkami na
         klávesnici. Ukládá se jen výřez — samotná fotka zůstává celá.
       </p>
 
       <div className="mt-4 max-w-[320px]">
-        <label htmlFor={id} className="flex items-baseline justify-between font-bold">
+        <label htmlFor={id} className="flex items-baseline justify-between text-[0.9375rem] font-semibold">
           <span>Přiblížení</span>
-          <span className="text-text-doplnek text-[1.0625rem]">
+          <span className="text-text-doplnek text-sm">
             {priblizeni === VYCHOZI_ZOOM ? "beze změny" : `${priblizeni.toFixed(1)}×`}
           </span>
         </label>
@@ -213,7 +213,7 @@ export function VyrezObrazku({
           onChange={(e) => ulozZoom(parseFloat(e.target.value))}
           className="accent-azurova mt-2 w-full"
         />
-        <p className="text-text-doplnek mt-1 text-[1.0625rem]">
+        <p className="text-text-doplnek mt-1 text-sm">
           Vlevo je fotka tak, jak se do rámečku vejde — menší už být nemůže,
           jinak by po stranách zbylo prázdné místo.
         </p>
@@ -223,7 +223,7 @@ export function VyrezObrazku({
         <button
           type="button"
           onClick={naStred}
-          className="klik rounded-tlacitko bg-linka hover:bg-seda mt-3 px-5 text-[1.0625rem] font-bold transition-colors duration-150"
+          className="hover:bg-plocha mt-2 inline-flex h-9 items-center rounded-md border border-[#c9cbc5] bg-white px-3 text-sm font-semibold"
         >
           Vrátit na střed
         </button>

@@ -18,7 +18,12 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
       <a href="#obsah-adminu" className="skip-link">
         Přejít na hlavní obsah
       </a>
-      <div className="bg-plocha flex min-h-full flex-col">{children}</div>
+      {/* Administrace je pracovní nástroj, ne web: menší písmo a hustší
+          rozložení, ať se do okna vejde víc. Čitelnost pro návštěvníky
+          (17 px a víc) se týká webu, ne téhle části. */}
+      <div className="bg-plocha flex min-h-full flex-col text-base leading-normal">
+        {children}
+      </div>
     </>
   );
 }

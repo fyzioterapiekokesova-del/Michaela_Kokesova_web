@@ -2,6 +2,7 @@ import Link from "next/link";
 import { vyzadujAdmina } from "@/lib/admin/autorizace";
 import { odhlasit } from "@/app/admin/akce/prihlaseni";
 import { adresaWebu } from "@/lib/admin/adresa-webu";
+import { MenuAdminu } from "@/komponenty/admin/menu";
 
 /**
  * Layout přihlášené části administrace.
@@ -21,15 +22,13 @@ export default async function ChranenyLayout({
   return (
     <>
       <header className="border-linka bg-povrch border-b">
-        <div className="obal flex flex-wrap items-center justify-between gap-x-6 gap-y-3 py-4">
-          <Link href="/admin" className="klik text-odkaz">
-            Správa obsahu
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 py-2">
+          <Link href="/admin" className="py-2 font-bold">
+            Správa obsahu webu
           </Link>
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <span className="text-text-doplnek text-[1.0625rem]">
-              {admin.email}
-            </span>
+          <div className="flex flex-wrap items-center gap-x-5 text-[0.9375rem]">
+            <span className="text-text-doplnek hidden sm:inline">{admin.email}</span>
             {/*
               Nová karta schválně: rozdělaná úprava v administraci se nesmí
               ztratit jen proto, že se šla majitelka podívat na web.
@@ -40,13 +39,13 @@ export default async function ChranenyLayout({
               href={adresaWebu()}
               target="_blank"
               rel="noopener"
-              className="klik text-[1.0625rem] underline"
+              className="py-2 underline"
             >
               Zobrazit web
               <span className="sr-only"> (otevře se v nové kartě)</span>
             </a>
             <form action={odhlasit}>
-              <button type="submit" className="klik text-[1.0625rem] underline">
+              <button type="submit" className="py-2 underline">
                 Odhlásit se
               </button>
             </form>
@@ -54,9 +53,12 @@ export default async function ChranenyLayout({
         </div>
       </header>
 
-      <main id="obsah-adminu" className="obal flex-1 py-8 lg:py-12">
-        {children}
-      </main>
+      <div className="flex flex-1 flex-col md:flex-row">
+        <MenuAdminu />
+        <main id="obsah-adminu" className="min-w-0 flex-1 px-4 py-6 lg:px-8">
+          {children}
+        </main>
+      </div>
     </>
   );
 }

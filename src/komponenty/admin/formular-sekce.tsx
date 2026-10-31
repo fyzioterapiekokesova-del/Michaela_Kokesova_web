@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { ulozSekci, type StavUlozeni } from "@/app/admin/akce/obsah";
 import type { Sekce } from "@/lib/admin/obsah-schema";
@@ -129,21 +128,15 @@ export function FormularSekce({ sekce, vychozi, naWebu }: Vlastnosti) {
         e.preventDefault();
         odesli();
       }}
-      className="max-w-[60rem]"
+      className="max-w-[64rem]"
     >
-      <p>
-        <Link href="/admin" className="klik underline">
-          ← Zpátky na přehled
-        </Link>
-      </p>
-
-      <div className="mt-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <h1 className="text-h2 lg:text-h2-pc">{sekce.nazev}</h1>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+        <h1 className="text-2xl font-bold">{sekce.nazev}</h1>
         <a
           href={naWebu}
           target="_blank"
           rel="noopener"
-          className="klik text-[1.0625rem] font-bold underline"
+          className="py-1 text-[0.9375rem] font-semibold underline"
           data-akce="admin-zobrazit-na-webu"
         >
           Zobrazit na webu ↗
@@ -151,12 +144,13 @@ export function FormularSekce({ sekce, vychozi, naWebu }: Vlastnosti) {
         </a>
       </div>
       {sekce.popis ? (
-        <p className="text-perex text-text-doplnek mt-3 max-w-[60ch]">
+        <p className="text-text-doplnek mt-1 max-w-[70ch] text-[0.9375rem]">
           {sekce.popis}
         </p>
       ) : null}
+      <p className="text-text-doplnek mt-1 text-sm">Pole s * je potřeba vyplnit.</p>
 
-      <div key={verze} className="mt-8 space-y-6">
+      <div key={verze} className="mt-5 space-y-4">
         <SadaPoli
           pola={sekce.pole}
           hodnoty={hodnoty}
@@ -168,13 +162,13 @@ export function FormularSekce({ sekce, vychozi, naWebu }: Vlastnosti) {
       </div>
 
       {/* Lišta s ukládáním, přilepená ke spodku okna, ať je vždycky po ruce. */}
-      <div className="border-linka bg-povrch sticky bottom-0 z-10 -mx-4 mt-8 border-t px-4 py-4 shadow-[0_-4px_12px_rgb(0_0_0/0.06)] sm:mx-0 sm:rounded-t-[16px] sm:border-x sm:px-6">
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+      <div className="border-linka sticky bottom-0 z-10 -mx-4 mt-5 border-t bg-white px-4 py-3 shadow-[0_-4px_12px_rgb(0_0_0/0.06)] sm:mx-0 sm:rounded-t-lg sm:border-x">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <button
             type="submit"
             disabled={ukladase || !neulozeno}
             data-akce="admin-ulozit"
-            className="klik rounded-tlacitko bg-azurova text-text hover:bg-text hover:text-azurova disabled:hover:bg-azurova disabled:hover:text-text justify-center px-8 text-[1.1875rem] font-extrabold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-azurova text-text hover:bg-text hover:text-azurova disabled:hover:bg-azurova disabled:hover:text-text inline-flex h-11 items-center justify-center rounded-md px-6 font-bold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {ukladase ? "Ukládá se…" : "Uložit změny"}
           </button>
@@ -183,13 +177,13 @@ export function FormularSekce({ sekce, vychozi, naWebu }: Vlastnosti) {
             <button
               type="button"
               onClick={zahod}
-              className="klik text-[1.0625rem] underline"
+              className="py-2 text-[0.9375rem] underline"
             >
               Zahodit změny
             </button>
           ) : null}
 
-          <div aria-live="polite" className="text-[1.0625rem]">
+          <div aria-live="polite" className="text-[0.9375rem]">
             {stav.stav === "chyba" && stav.zprava ? (
               <p className="text-chyba font-bold">{stav.zprava}</p>
             ) : pocetChyb > 0 ? (

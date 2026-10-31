@@ -38,6 +38,11 @@ type Zaklad = {
    * sbaleného bloku „Další nastavení" na konci sekce.
    */
   dalsi?: boolean;
+  /**
+   * Skupina, kterou stačí měnit jednou za čas (nadpis a úvod stránky).
+   * Stačí uvést u prvního pole skupiny — celá se pak vykreslí sbalená.
+   */
+  sbalenaSkupina?: boolean;
 };
 
 export type Moznost = { hodnota: string; popisek: string };
@@ -90,6 +95,8 @@ export type Sekce = {
   klic: string;
   /** Nadpis v administraci. */
   nazev: string;
+  /** Krátký název do menu vlevo. Když chybí, bere se `nazev`. */
+  kratce?: string;
   popis?: string;
   /** Které adresy se po uložení mají obnovit. */
   obnovit: readonly string[];
@@ -313,6 +320,7 @@ export const SCHEMA: readonly Sekce[] = [
 
   {
     klic: "o-mne-uvod",
+    kratce: "O Michaele",
     nazev: "O Michaele — blok na úvodu",
     obnovit: ["/"],
     pole: [
@@ -340,6 +348,7 @@ export const SCHEMA: readonly Sekce[] = [
 
   {
     klic: "ordinace",
+    kratce: "Ordinace",
     nazev: "Ordinace — fotky na úvodu",
     popis:
       "Dokud je sekce vypnutá, na webu se vůbec neobjeví. Zapněte ji, až budete mít fotky.",
@@ -466,10 +475,11 @@ export const SCHEMA: readonly Sekce[] = [
 
   {
     klic: "sluzba-fyzioterapie",
+    kratce: "Fyzioterapie",
     nazev: "Služba — Fyzioterapie",
     obnovit: ["/fyzioterapie"],
     pole: [
-      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", povinne: true, max: 90 },
+      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", sbalenaSkupina: true, povinne: true, max: 90 },
       {
         druh: "viceradkovy",
         jmeno: "perex",
@@ -484,12 +494,13 @@ export const SCHEMA: readonly Sekce[] = [
 
   {
     klic: "sluzba-podologie",
+    kratce: "Podologie",
     nazev: "Služba — Podologie",
     popis:
       "Nejdůležitější stránka webu z hlediska vyhledávání. V Budějovicích podologii skoro nikdo nedělá.",
     obnovit: ["/podologie"],
     pole: [
-      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", povinne: true, max: 90 },
+      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", sbalenaSkupina: true, povinne: true, max: 90 },
       {
         druh: "viceradkovy",
         jmeno: "perex",
@@ -504,10 +515,11 @@ export const SCHEMA: readonly Sekce[] = [
 
   {
     klic: "sluzba-detska",
+    kratce: "Dětská fyzioterapie",
     nazev: "Služba — Dětská fyzioterapie",
     obnovit: ["/detska-fyzioterapie"],
     pole: [
-      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", povinne: true, max: 90 },
+      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", sbalenaSkupina: true, povinne: true, max: 90 },
       {
         druh: "viceradkovy",
         jmeno: "perex",
@@ -527,7 +539,7 @@ export const SCHEMA: readonly Sekce[] = [
       "Co hradí pojišťovna a co si klient platí sám, napište do poznámky u položky.",
     obnovit: ["/cenik"],
     pole: [
-      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", povinne: true, max: 90 },
+      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", sbalenaSkupina: true, povinne: true, max: 90 },
       {
         druh: "viceradkovy",
         jmeno: "perex",
@@ -641,7 +653,7 @@ export const SCHEMA: readonly Sekce[] = [
       "Pořadí měníte šipkami. Nahoru patří to, na co se lidé ptají nejčastěji.",
     obnovit: ["/caste-dotazy", "/"],
     pole: [
-      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", povinne: true, max: 90 },
+      { druh: "text", jmeno: "nadpis", popisek: "Nadpis", skupina: "Úvod stránky", sbalenaSkupina: true, povinne: true, max: 90 },
       {
         druh: "viceradkovy",
         jmeno: "perex",
@@ -665,6 +677,7 @@ export const SCHEMA: readonly Sekce[] = [
 
   {
     klic: "seo",
+    kratce: "Vyhledávače",
     nazev: "Titulky a popisy pro vyhledávače",
     popis:
       "Titulek je to, co se ukáže jako modrý odkaz ve vyhledávání. Popis je šedý text pod ním.",
@@ -721,6 +734,7 @@ export const SCHEMA: readonly Sekce[] = [
 
   {
     klic: "pravni",
+    kratce: "Právní texty",
     nazev: "Právní dokumenty",
     popis:
       "Texty zásad spravujete sami a odpovídáte za jejich obsah. Každý odstavec oddělte prázdným řádkem.",
@@ -736,6 +750,29 @@ export const SCHEMA: readonly Sekce[] = [
     ],
   },
 ] as const;
+
+/**
+ * Menu administrace vlevo. Sekce úvodní stránky pohromadě, pak ostatní
+ * stránky, nakonec věci, na které se sahá výjimečně.
+ */
+export const MENU: readonly { nazev: string; klice: readonly string[] }[] = [
+  {
+    nazev: "Úvodní stránka",
+    klice: ["hero", "potize", "postup", "vek", "o-mne-uvod", "ordinace", "kontakt"],
+  },
+  {
+    nazev: "Další stránky",
+    klice: [
+      "sluzba-fyzioterapie",
+      "sluzba-podologie",
+      "sluzba-detska",
+      "cenik",
+      "o-mne",
+      "faq",
+    ],
+  },
+  { nazev: "Nastavení", klice: ["seo", "pravni"] },
+];
 
 export function najdiSekci(klic: string): Sekce | undefined {
   return SCHEMA.find((s) => s.klic === klic);

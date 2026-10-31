@@ -39,10 +39,20 @@ type Vlastnosti = {
 };
 
 const VSTUP =
-  "border-linka bg-povrch rounded-polozka w-full border px-4 py-3 " +
-  "text-[1.0625rem] focus:border-text";
+  "w-full rounded-md border border-[#c9cbc5] bg-white px-3 py-2 text-base " +
+  "focus:border-text";
+
+/** V řádku tabulky menší, ať se ceník vejde na obrazovku. */
+const VSTUP_KOMPAKTNI =
+  "w-full rounded border border-[#d6d7d3] bg-white px-2 py-1.5 text-base " +
+  "focus:border-text";
 
 const VSTUP_CHYBA = "border-chyba border-2";
+
+/** Vedlejší tlačítko administrace — obyčejné, ne jako na webu. */
+export const TLACITKO =
+  "inline-flex h-9 items-center justify-center rounded-md border border-[#c9cbc5] " +
+  "bg-white px-3 text-sm font-semibold hover:bg-plocha disabled:opacity-40";
 
 function retezec(hodnoty: Hodnoty, jmeno: string, vychozi = ""): string {
   const h = hodnoty[jmeno];
@@ -75,27 +85,30 @@ function Obal({
   children: ReactNode;
 }) {
   return (
-    <div className={kompaktni ? "" : "mt-6"}>
+    <div className={kompaktni ? "" : "mt-4"}>
       <label
         htmlFor={id}
-        className={`block font-bold ${kompaktni ? "lg:sr-only" : ""}`}
+        className={`block text-[0.9375rem] font-semibold ${kompaktni ? "@xl:sr-only" : ""}`}
       >
         {pole.popisek}
         {pole.povinne ? (
-          <span className="text-text-doplnek font-normal"> — vyplňte</span>
+          <>
+            <span aria-hidden> *</span>
+            <span className="sr-only"> (povinné)</span>
+          </>
         ) : null}
       </label>
       {pole.napoveda ? (
         <p
           id={idNapovedy}
-          className={`text-text-doplnek mt-1 text-[1.0625rem] ${kompaktni ? "lg:sr-only" : ""}`}
+          className={`text-text-doplnek text-sm ${kompaktni ? "@xl:sr-only" : ""}`}
         >
           {pole.napoveda}
         </p>
       ) : null}
-      <div className={kompaktni ? "mt-1 lg:mt-0" : "mt-2"}>{children}</div>
+      <div className={kompaktni ? "mt-1 @xl:mt-0" : "mt-1"}>{children}</div>
       {chyba ? (
-        <p id={idChyby} data-chyba className="text-chyba mt-2 font-bold">
+        <p id={idChyby} data-chyba className="text-chyba mt-1 text-sm font-semibold">
           {chyba}
         </p>
       ) : null}
@@ -110,7 +123,7 @@ function Obal({
 function Pocitadlo({ delka, max }: { delka: number; max: number }) {
   if (delka < max * 0.8) return null;
   return (
-    <p className="mt-1 text-[1.0625rem] font-bold">
+    <p className="text-text-doplnek mt-0.5 text-sm">
       {delka} z {max} znaků
     </p>
   );
@@ -132,6 +145,7 @@ export function PoleFormulare({
   const idChyby = chyba ? `${id}-chyba` : undefined;
   const popis = [idNapovedy, idChyby].filter(Boolean).join(" ") || undefined;
   const spolecne = { id, pole, idNapovedy, idChyby, chyba, kompaktni };
+  const vstup = kompaktni ? VSTUP_KOMPAKTNI : VSTUP;
 
   switch (pole.druh) {
     case "text": {
@@ -146,7 +160,7 @@ export function PoleFormulare({
             aria-describedby={popis}
             aria-invalid={chyba ? true : undefined}
             onChange={(e) => zmen(pole.jmeno, e.target.value)}
-            className={`${VSTUP} ${chyba ? VSTUP_CHYBA : ""}`}
+            className={`${vstup} ${chyba ? VSTUP_CHYBA : ""}`}
           />
           {pole.max ? <Pocitadlo delka={hodnota.length} max={pole.max} /> : null}
         </Obal>
@@ -165,7 +179,7 @@ export function PoleFormulare({
             aria-describedby={popis}
             aria-invalid={chyba ? true : undefined}
             onChange={(e) => zmen(pole.jmeno, e.target.value)}
-            className={`${VSTUP} ${chyba ? VSTUP_CHYBA : ""}`}
+            className={`${vstup} ${chyba ? VSTUP_CHYBA : ""}`}
           />
           {pole.max ? <Pocitadlo delka={hodnota.length} max={pole.max} /> : null}
         </Obal>
@@ -175,24 +189,24 @@ export function PoleFormulare({
     case "prepinac": {
       const zapnuto = hodnoty[pole.jmeno] === true;
       return (
-        <div className="mt-6">
-          <div className="flex items-start gap-3">
+        <div className="mt-4">
+          <div className="flex items-start gap-2.5">
             <input
               id={id}
               type="checkbox"
               checked={zapnuto}
               aria-describedby={idNapovedy}
               onChange={(e) => zmen(pole.jmeno, e.target.checked)}
-              className="mt-1 h-6 w-6 shrink-0"
+              className="accent-text mt-0.5 h-5 w-5 shrink-0"
             />
-            <label htmlFor={id} className="font-bold">
+            <label htmlFor={id} className="font-semibold">
               {pole.popisek}
             </label>
           </div>
           {pole.napoveda ? (
             <p
               id={idNapovedy}
-              className="text-text-doplnek mt-1 ml-9 text-[1.0625rem]"
+              className="text-text-doplnek ml-7.5 text-sm"
             >
               {pole.napoveda}
             </p>
@@ -210,7 +224,7 @@ export function PoleFormulare({
             value={hodnota}
             aria-describedby={popis}
             onChange={(e) => zmen(pole.jmeno, e.target.value)}
-            className={`${VSTUP} ${chyba ? VSTUP_CHYBA : ""}`}
+            className={`${vstup} ${chyba ? VSTUP_CHYBA : ""}`}
           >
             {pole.moznosti.map((m) => (
               <option key={m.hodnota} value={m.hodnota}>
@@ -234,7 +248,7 @@ export function PoleFormulare({
             aria-describedby={popis}
             aria-invalid={chyba ? true : undefined}
             onChange={(e) => zmen(pole.jmeno, e.target.value)}
-            className={`${VSTUP} ${chyba ? VSTUP_CHYBA : ""}`}
+            className={`${vstup} ${chyba ? VSTUP_CHYBA : ""}`}
           >
             <option value="">— vyberte stránku —</option>
             {CILE_ODKAZU.map((s) => (
@@ -337,15 +351,15 @@ function PoleObrazku({
   }
 
   return (
-    <div role="group" aria-label={pole.popisek} className="mt-6">
+    <div role="group" aria-label={pole.popisek} className="mt-4">
       {pole.napoveda ? (
-        <p className="text-text-doplnek text-[1.0625rem]">{pole.napoveda}</p>
+        <p className="text-text-doplnek text-sm">{pole.napoveda}</p>
       ) : null}
 
-      <div className="mt-3 flex flex-wrap items-start gap-5">
+      <div className="mt-2 flex flex-wrap items-start gap-4">
         <div
-          className={`bg-seda rounded-polozka relative shrink-0 overflow-hidden ${
-            pole.varianta === "sdileni" ? "w-64" : "w-44"
+          className={`bg-seda relative shrink-0 overflow-hidden rounded-md ${
+            pole.varianta === "sdileni" ? "w-48" : "w-28"
           }`}
           style={{ aspectRatio: pomer }}
         >
@@ -359,13 +373,13 @@ function PoleObrazku({
               style={stylVyrezu(hodnoty[pole.poziceJmeno], hodnoty[pole.zoomJmeno])}
             />
           ) : (
-            <span className="text-text-doplnek absolute inset-0 flex items-center justify-center p-3 text-center text-[1.0625rem]">
+            <span className="text-text-doplnek absolute inset-0 flex items-center justify-center p-2 text-center text-sm">
               Zatím bez fotky
             </span>
           )}
         </div>
 
-        <div className="flex flex-col items-start gap-2">
+        <div className="flex flex-col items-start gap-1.5">
           {/*
             Systémové pole pro výběr souboru je drobné a snadno se přehlédne.
             Vstup proto zůstává, ale schovaný, a klikacím prvkem je jeho
@@ -374,7 +388,7 @@ function PoleObrazku({
           */}
           <label
             htmlFor={id}
-            className="klik rounded-tlacitko bg-azurova text-text hover:bg-text hover:text-azurova cursor-pointer px-6 font-bold transition-colors duration-150 focus-within:outline-3 focus-within:outline-offset-3 focus-within:outline-current"
+            className={`${TLACITKO} cursor-pointer focus-within:outline-3 focus-within:outline-offset-3 focus-within:outline-current`}
           >
             {nahrava ? "Nahrává se…" : cesta ? "Nahrát jinou fotku" : "Nahrát fotku"}
             <input
@@ -391,9 +405,7 @@ function PoleObrazku({
               className="sr-only"
             />
           </label>
-          <p className="text-text-doplnek text-[1.0625rem]">
-            JPG, PNG nebo WEBP, nejvýš 5 MB.
-          </p>
+          <p className="text-text-doplnek text-sm">JPG, PNG nebo WEBP, nejvýš 5 MB.</p>
 
           {cesta ? (
             <>
@@ -401,7 +413,7 @@ function PoleObrazku({
                 type="button"
                 onClick={() => setUpravujeVyrez((v) => !v)}
                 aria-expanded={upravujeVyrez}
-                className="klik rounded-tlacitko bg-linka hover:bg-seda px-5 text-[1.0625rem] font-bold transition-colors duration-150"
+                className={TLACITKO}
               >
                 {upravujeVyrez ? "Hotovo s výřezem" : "Upravit výřez"}
               </button>
@@ -417,7 +429,7 @@ function PoleObrazku({
                     zmen(pole.jmeno, "");
                   }
                 }}
-                className="klik text-[1.0625rem] underline"
+                className="text-chyba py-1 text-sm underline"
               >
                 Odebrat fotku
               </button>
@@ -427,12 +439,12 @@ function PoleObrazku({
       </div>
 
       {chybaNahrani ? (
-        <p data-chyba className="text-chyba mt-3 font-bold">
+        <p data-chyba className="text-chyba mt-2 text-sm font-semibold">
           {chybaNahrani}
         </p>
       ) : null}
       {chyba ? (
-        <p data-chyba className="text-chyba mt-3 font-bold">
+        <p data-chyba className="text-chyba mt-2 text-sm font-semibold">
           {chyba}
         </p>
       ) : null}

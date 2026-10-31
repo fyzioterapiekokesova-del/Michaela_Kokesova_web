@@ -2,7 +2,7 @@
 
 import { useId, useState, type CSSProperties } from "react";
 import type { Pole } from "@/lib/admin/obsah-schema";
-import { PoleFormulare, type Hodnoty } from "./pole";
+import { PoleFormulare, TLACITKO, type Hodnoty } from "./pole";
 
 /**
  * Sada polí a seznamy položek.
@@ -27,7 +27,8 @@ type SpolecneVlastnosti = {
   zmen: (jmeno: string, hodnota: unknown) => void;
 };
 
-const KARTA = "bg-povrch border-linka rounded-karta border p-5 lg:p-7";
+const KARTA = "border-linka rounded-lg border bg-white p-4 sm:p-5";
+const NADPIS_KARTY = "text-lg font-bold";
 
 function cestaPole(cesta: string, jmeno: string): string {
   return cesta ? `${cesta}.${jmeno}` : jmeno;
@@ -70,13 +71,34 @@ function rozdelNaBloky(pola: readonly Pole[]): Blok[] {
   return bloky;
 }
 
+/** Sbalený blok — na co se sahá jen občas. Při chybě uvnitř se rozbalí sám. */
+function SbalenyBlok({
+  nadpis,
+  napoveda,
+  pola,
+  ...zbytek
+}: SpolecneVlastnosti & { nadpis: string; napoveda?: string; pola: readonly Pole[] }) {
+  const chyba = pola.some((p) => maChybu(zbytek.chyby, p.jmeno));
+  return (
+    <details className={KARTA} open={chyba || undefined}>
+      <summary className={`${NADPIS_KARTY} cursor-pointer`}>
+        {nadpis}
+        <span className="text-text-doplnek ml-2 text-sm font-normal underline">
+          zobrazit
+        </span>
+      </summary>
+      {napoveda ? <p className="text-text-doplnek mt-1 text-sm">{napoveda}</p> : null}
+      <MrizkaPoli pola={pola} {...zbytek} />
+    </details>
+  );
+}
+
 function Bloky({
   pola,
   ...zbytek
 }: SpolecneVlastnosti & { pola: readonly Pole[] }) {
   const hlavni = pola.filter((p) => !p.dalsi);
   const dalsi = pola.filter((p) => p.dalsi);
-  const dalsiMaChybu = dalsi.some((p) => maChybu(zbytek.chyby, p.jmeno));
 
   return (
     <>
@@ -90,12 +112,17 @@ function Bloky({
             </div>
           );
         }
+        if (blok.nadpis && prvni.sbalenaSkupina) {
+          return (
+            <SbalenyBlok key={i} nadpis={blok.nadpis} pola={blok.pola} {...zbytek} />
+          );
+        }
         return (
           <section key={i} className={KARTA}>
-            {blok.nadpis ? <h2 className="text-h3">{blok.nadpis}</h2> : null}
+            {blok.nadpis ? <h2 className={NADPIS_KARTY}>{blok.nadpis}</h2> : null}
             <MrizkaPoli
               pola={blok.pola}
-              className={blok.nadpis ? "" : "-mt-6"}
+              className={blok.nadpis ? "" : "-mt-4"}
               {...zbytek}
             />
           </section>
@@ -103,15 +130,12 @@ function Bloky({
       })}
 
       {dalsi.length > 0 ? (
-        <details className={KARTA} open={dalsiMaChybu || undefined}>
-          <summary className="cursor-pointer py-2 text-[1.1875rem] font-bold">
-            Další nastavení
-          </summary>
-          <p className="text-text-doplnek mt-1 text-[1.0625rem]">
-            Nastavuje se jednou, běžně sem sahat nemusíte.
-          </p>
-          <MrizkaPoli pola={dalsi} {...zbytek} />
-        </details>
+        <SbalenyBlok
+          nadpis="Další nastavení"
+          napoveda="Nastavuje se jednou, běžně sem sahat nemusíte."
+          pola={dalsi}
+          {...zbytek}
+        />
       ) : null}
     </>
   );
@@ -137,7 +161,7 @@ function MrizkaPoli({
   );
 
   return (
-    <div className={`grid gap-x-6 md:grid-cols-2 ${className}`}>
+    <div className={`grid gap-x-4 md:grid-cols-2 ${className}`}>
       {pola
         .filter((p) => !popiskyFotek.has(p.jmeno))
         .map((pole) => (
@@ -221,8 +245,7 @@ function souhrn(polozka: Hodnoty, pola: readonly Pole[]): string {
   return "";
 }
 
-const MALE_TLACITKO =
-  "klik rounded-polozka bg-linka hover:bg-seda justify-center font-bold transition-colors duration-150 disabled:opacity-40";
+const IKONA = `${TLACITKO} w-9 px-0`;
 
 function AkcePolozky({
   nazev,
@@ -240,7 +263,7 @@ function AkcePolozky({
   smaz: () => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex shrink-0 gap-1">
       {/* Pořadí se mění šipkami. Tažení myší se na dotykovém zařízení
           ovládá špatně a klávesnicí skoro vůbec. */}
       <button
@@ -248,7 +271,8 @@ function AkcePolozky({
         onClick={() => presun(-1)}
         disabled={poradi === 0}
         aria-label={`Posunout ${nazev} číslo ${poradi + 1} nahoru`}
-        className={`${MALE_TLACITKO} min-w-12 px-3`}
+        title="Posunout nahoru"
+        className={IKONA}
       >
         ↑
       </button>
@@ -257,7 +281,8 @@ function AkcePolozky({
         onClick={() => presun(1)}
         disabled={poradi === pocet - 1}
         aria-label={`Posunout ${nazev} číslo ${poradi + 1} dolů`}
-        className={`${MALE_TLACITKO} min-w-12 px-3`}
+        title="Posunout dolů"
+        className={IKONA}
       >
         ↓
       </button>
@@ -266,9 +291,10 @@ function AkcePolozky({
         onClick={smaz}
         disabled={!muzeUbrat}
         aria-label={`Smazat ${nazev} číslo ${poradi + 1}`}
-        className={`${MALE_TLACITKO} px-4 text-[1.0625rem]`}
+        title="Smazat"
+        className={`${IKONA} text-chyba`}
       >
-        Smazat
+        ✕
       </button>
     </div>
   );
@@ -294,6 +320,9 @@ function SeznamPolozek({
   const cestaSeznamu = cestaPole(cesta, pole.jmeno);
   const chybaSeznamu = chyby[cestaSeznamu];
   const zobrazeni = pole.zobrazeni ?? "rozbalene";
+  // Seznam uvnitř položky jiného seznamu (položky ceníku v oblasti).
+  // Rámeček už má položka, druhý by byl navíc.
+  const vnoreny = cesta.includes("[");
 
   function uloz(nove: Polozka[]) {
     zmen(pole.jmeno, nove);
@@ -350,10 +379,10 @@ function SeznamPolozek({
     );
   }
 
-  function polePolozky(polozka: Polozka, index: number) {
+  function polePolozky(polozka: Polozka, index: number, pola = pole.polozka) {
     return (
       <SadaPoli
-        pola={pole.polozka}
+        pola={pola}
         hodnoty={polozka}
         cesta={`${cestaSeznamu}[${index}]`}
         chyby={chyby}
@@ -369,155 +398,191 @@ function SeznamPolozek({
       .map((p) => (p.sirka === "pul" ? "minmax(0,1fr)" : "minmax(0,2fr)"))
       .join(" ") + " auto";
 
+  const [prvniPole, ...ostatniPole] = pole.polozka;
+
   return (
     <fieldset
-      className={bezRamecku ? "" : "border-linka rounded-karta mt-6 border p-4 lg:p-5"}
+      className={
+        bezRamecku || vnoreny ? "" : "border-linka mt-4 rounded-md border p-3"
+      }
     >
-      <legend className={bezRamecku ? "text-h3" : "px-2 font-bold"}>
+      <legend
+        className={
+          bezRamecku
+            ? NADPIS_KARTY
+            : vnoreny
+              ? "text-text-doplnek text-sm font-semibold"
+              : "px-1 text-[0.9375rem] font-semibold"
+        }
+      >
         {pole.popisek}
       </legend>
 
       {pole.napoveda ? (
-        <p className="text-text-doplnek mt-2 text-[1.0625rem]">{pole.napoveda}</p>
+        <p className="text-text-doplnek mt-1 text-sm">{pole.napoveda}</p>
       ) : null}
 
       {polozky.length === 0 ? (
-        <p className="text-text-doplnek mt-3 text-[1.0625rem]">
+        <p className="text-text-doplnek mt-2 text-sm">
           Zatím tu nic není. Přidejte první {pole.nazevPolozky} tlačítkem dole.
         </p>
       ) : null}
 
-      {zobrazeni === "tabulka" && polozky.length > 0 ? (
-        <div
-          aria-hidden
-          className="text-text-doplnek mt-4 hidden gap-3 font-bold lg:grid"
-          style={{ gridTemplateColumns: sloupce }}
-        >
-          {pole.polozka.map((p) => (
-            <span key={p.jmeno}>{p.popisek}</span>
-          ))}
-          <span />
-        </div>
-      ) : null}
+      {/* Kontejner: tabulka se rozloží do řádků podle místa, které má,
+          ne podle šířky okna — vedle menu je ho míň než celé okno. */}
+      <div className="@container">
+        {zobrazeni === "tabulka" && polozky.length > 0 ? (
+          <div
+            aria-hidden
+            className="text-text-doplnek mt-2 hidden gap-2 text-sm font-semibold @xl:grid"
+            style={{ gridTemplateColumns: sloupce }}
+          >
+            {pole.polozka.map((p) => (
+              <span key={p.jmeno}>{p.popisek}</span>
+            ))}
+            <span />
+          </div>
+        ) : null}
 
-      <ol
-        className={
-          zobrazeni === "mrizka" ? "mt-4 grid gap-4 md:grid-cols-2" : "mt-2"
-        }
-      >
-        {polozky.map((polozka, index) => {
-          const cestaPolozky = `${cestaSeznamu}[${index}]`;
-
-          if (zobrazeni === "tabulka") {
-            return (
-              <li
-                key={polozka._id}
-                className="border-linka grid gap-3 border-t py-4 first:border-t-0 lg:items-start lg:py-2 lg:[grid-template-columns:var(--sloupce)]"
-                style={{ "--sloupce": sloupce } as CSSProperties}
-              >
-                {pole.polozka.map((p) => (
-                  <PoleFormulare
-                    key={p.jmeno}
-                    pole={p}
-                    hodnoty={polozka}
-                    cesta={`${cestaPolozky}.${p.jmeno}`}
-                    chyby={chyby}
-                    klicSekce={klicSekce}
-                    zmen={(jmeno, hodnota) => zmenPolozku(index, jmeno, hodnota)}
-                    kompaktni
-                  />
-                ))}
-                <div className="order-first flex flex-wrap items-center justify-between gap-2 lg:order-none">
-                  <span className="text-text-doplnek font-bold lg:hidden">
-                    {index + 1}.
-                  </span>
-                  {akce(index)}
-                </div>
-              </li>
-            );
+        <ol
+          className={
+            zobrazeni === "mrizka"
+              ? "mt-2 grid gap-3 @xl:grid-cols-2"
+              : zobrazeni === "sbalene" && polozky.length > 0
+                ? "border-linka mt-2 rounded-md border"
+                : "mt-1"
           }
+        >
+          {polozky.map((polozka, index) => {
+            const cestaPolozky = `${cestaSeznamu}[${index}]`;
 
-          if (zobrazeni === "sbalene") {
-            const otevrena =
-              otevrene.has(polozka._id) || maChybu(chyby, cestaPolozky);
-            const idTela = `${id}-${index}`;
-            const nadpis = souhrn(polozka, pole.polozka);
-            return (
-              <li
-                key={polozka._id}
-                className="border-linka rounded-karta mt-3 border"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2">
-                  <button
-                    type="button"
-                    onClick={() => prepni(polozka._id)}
-                    aria-expanded={otevrena}
-                    aria-controls={idTela}
-                    className="klik min-w-0 flex-1 basis-60 gap-3 text-left font-bold"
-                  >
-                    <span aria-hidden className="shrink-0">
-                      {otevrena ? "▾" : "▸"}
+            if (zobrazeni === "tabulka") {
+              return (
+                <li
+                  key={polozka._id}
+                  className="border-linka grid gap-2 border-t py-3 first:border-t-0 @xl:items-start @xl:border-t-0 @xl:py-1 @xl:[grid-template-columns:var(--sloupce)]"
+                  style={{ "--sloupce": sloupce } as CSSProperties}
+                >
+                  {pole.polozka.map((p) => (
+                    <PoleFormulare
+                      key={p.jmeno}
+                      pole={p}
+                      hodnoty={polozka}
+                      cesta={`${cestaPolozky}.${p.jmeno}`}
+                      chyby={chyby}
+                      klicSekce={klicSekce}
+                      zmen={(jmeno, hodnota) => zmenPolozku(index, jmeno, hodnota)}
+                      kompaktni
+                    />
+                  ))}
+                  <div className="order-first flex items-center justify-between @xl:order-none">
+                    <span className="text-text-doplnek text-sm font-semibold @xl:hidden">
+                      {index + 1}.
                     </span>
-                    <span>
-                      {index + 1}. {nadpis || "(zatím bez textu)"}
-                      <span className="text-text-doplnek ml-2 font-normal underline">
+                    {akce(index)}
+                  </div>
+                </li>
+              );
+            }
+
+            if (zobrazeni === "sbalene") {
+              const otevrena =
+                otevrene.has(polozka._id) || maChybu(chyby, cestaPolozky);
+              const idTela = `${id}-${index}`;
+              const nadpis = souhrn(polozka, pole.polozka);
+              return (
+                <li key={polozka._id} className="border-linka border-b last:border-b-0">
+                  <div className="flex items-center gap-2 px-3 py-1">
+                    <button
+                      type="button"
+                      onClick={() => prepni(polozka._id)}
+                      aria-expanded={otevrena}
+                      aria-controls={idTela}
+                      className="flex min-w-0 flex-1 items-baseline gap-2 py-1.5 text-left"
+                    >
+                      <span aria-hidden className="text-text-doplnek w-3 shrink-0">
+                        {otevrena ? "▾" : "▸"}
+                      </span>
+                      <span className="min-w-0 font-semibold">
+                        {nadpis || "(zatím bez textu)"}
+                      </span>
+                      <span className="text-text-doplnek ml-auto shrink-0 pl-2 text-sm underline">
                         {otevrena ? "sbalit" : "upravit"}
                       </span>
+                    </button>
+                    {akce(index)}
+                  </div>
+                  {otevrena ? (
+                    <div id={idTela} className="px-3 pb-4 sm:pl-8">
+                      {polePolozky(polozka, index)}
+                    </div>
+                  ) : null}
+                </li>
+              );
+            }
+
+            if (zobrazeni === "mrizka") {
+              return (
+                <li key={polozka._id} className="border-linka rounded-md border p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-text-doplnek text-sm font-semibold">
+                      {index + 1}.
                     </span>
-                  </button>
+                    {akce(index)}
+                  </div>
+                  {polePolozky(polozka, index)}
+                </li>
+              );
+            }
+
+            // Rozbalené (oblasti ceníku): první pole je název a jde do záhlaví
+            // položky vedle tlačítek, zbytek pod něj.
+            const nazevVZahlavi = prvniPole?.druh === "text";
+            return (
+              <li key={polozka._id} className="border-linka mt-3 rounded-md border">
+                <div className="bg-plocha @container flex items-end gap-2 rounded-t-md px-3 py-2">
+                  <div className="min-w-0 flex-1 font-semibold">
+                    {nazevVZahlavi ? (
+                      <PoleFormulare
+                        pole={prvniPole}
+                        hodnoty={polozka}
+                        cesta={`${cestaPolozky}.${prvniPole.jmeno}`}
+                        chyby={chyby}
+                        klicSekce={klicSekce}
+                        zmen={(jmeno, hodnota) => zmenPolozku(index, jmeno, hodnota)}
+                        kompaktni
+                      />
+                    ) : (
+                      <span>{index + 1}.</span>
+                    )}
+                  </div>
                   {akce(index)}
                 </div>
-                {otevrena ? (
-                  <div id={idTela} className="border-linka border-t px-4 pb-5">
-                    {polePolozky(polozka, index)}
-                  </div>
-                ) : null}
+                <div className="px-3 pb-3">
+                  {polePolozky(polozka, index, nazevVZahlavi ? ostatniPole : pole.polozka)}
+                </div>
               </li>
             );
-          }
-
-          return (
-            <li
-              key={polozka._id}
-              className={
-                zobrazeni === "mrizka"
-                  ? "border-linka rounded-karta border p-4"
-                  : "border-linka mt-4 border-t pt-4 first:mt-0 first:border-t-0 first:pt-0"
-              }
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="font-bold">
-                  {index + 1}.{" "}
-                  {zobrazeni === "rozbalene" ? souhrn(polozka, pole.polozka) : null}
-                </p>
-                {akce(index)}
-              </div>
-              {polePolozky(polozka, index)}
-            </li>
-          );
-        })}
-      </ol>
+          })}
+        </ol>
+      </div>
 
       {chybaSeznamu ? (
-        <p data-chyba className="text-chyba mt-3 font-bold">
+        <p data-chyba className="text-chyba mt-2 text-sm font-semibold">
           {chybaSeznamu}
         </p>
       ) : null}
 
-      <button
-        type="button"
-        onClick={pridej}
-        disabled={!muzePridat}
-        className="klik rounded-tlacitko bg-linka hover:bg-seda mt-5 justify-center px-6 font-bold transition-colors duration-150 disabled:opacity-40"
-      >
-        + Přidat {pole.nazevPolozky}
-      </button>
-
-      {!muzePridat ? (
-        <p className="text-text-doplnek mt-2 text-[1.0625rem]">
-          Víc než {pole.max} se jich na stránku nevejde.
-        </p>
-      ) : null}
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <button type="button" onClick={pridej} disabled={!muzePridat} className={TLACITKO}>
+          + Přidat {pole.nazevPolozky}
+        </button>
+        {!muzePridat ? (
+          <span className="text-text-doplnek text-sm">
+            Víc než {pole.max} se jich na stránku nevejde.
+          </span>
+        ) : null}
+      </div>
     </fieldset>
   );
 }
