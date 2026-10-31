@@ -392,11 +392,20 @@ function SeznamPolozek({
     );
   }
 
-  // Šířky sloupců tabulky: krátká pole užší, ostatní širší, na konci tlačítka.
+  // Šířky sloupců tabulky: první dlouhé pole (název úkonu) nejširší, krátká
+  // pole úzká. Sloupec s tlačítky má pevnou šířku — se šířkou `auto` by
+  // záhlaví (kde tlačítka nejsou) rozpočítalo sloupce jinak než řádky.
+  const prvniDlouhe = pole.polozka.findIndex((p) => p.sirka !== "pul");
   const sloupce =
     pole.polozka
-      .map((p) => (p.sirka === "pul" ? "minmax(0,1fr)" : "minmax(0,2fr)"))
-      .join(" ") + " auto";
+      .map((p, i) =>
+        p.sirka === "pul"
+          ? "minmax(0,1fr)"
+          : i === prvniDlouhe
+            ? "minmax(0,3fr)"
+            : "minmax(0,2fr)",
+      )
+      .join(" ") + " 7.25rem";
 
   const [prvniPole, ...ostatniPole] = pole.polozka;
 
