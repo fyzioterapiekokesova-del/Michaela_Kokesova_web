@@ -400,7 +400,8 @@ function SeznamPolozek({
     pole.polozka
       .map((p, i) =>
         p.sirka === "pul"
-          ? "minmax(0,1fr)"
+          ? // Aspoň na „na dotaz" nebo „60 min" — užší by text usekl.
+            "minmax(5.5rem,1fr)"
           : i === prvniDlouhe
             ? "minmax(0,3fr)"
             : "minmax(0,2fr)",
